@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { extractYoutubeUrl } from "@/utils/extractYoutube";
 
 export default function LessonCard({ item }) {
   const thumb = extractThumbnail(item);
@@ -36,7 +37,9 @@ export default function LessonCard({ item }) {
 /* מחלץ thumbnail מיוטיוב */
 function extractThumbnail(item) {
   try {
-    const url = item?.youtube?.nodes?.[0]?.videoData?.video?.src?.url;
+    const videoNode = item?.youtube?.nodes?.find((n) => n.type === "VIDEO");
+
+    const url = videoNode?.videoData?.video?.src?.url;
     if (!url) return "/placeholder.jpg";
 
     let id = "";

@@ -57,7 +57,8 @@ export default function LessonView({ item }) {
     }
   }
 
-  const videoUrl = item.youtube?.nodes?.[0]?.videoData?.video?.src?.url ?? "";
+  const videoNode = item?.youtube?.nodes?.find((n) => n.type === "VIDEO");
+  const videoUrl = videoNode?.videoData?.video?.src?.url ?? "";
 
   /* ------------------------ רנדור ------------------------ */
   return (
