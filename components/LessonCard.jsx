@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { extractYoutubeUrl } from "@/utils/extractYoutube";
 
 export default function LessonCard({ item }) {
   const thumb = extractThumbnail(item);
