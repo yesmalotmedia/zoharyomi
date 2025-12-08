@@ -69,7 +69,7 @@ export default function IyunPage() {
           <div style={styles.grid}>
             {visibleLessons.map((item) => (
               <div key={item._id} style={styles.cardWrapper}>
-                <LessonCard item={item} />
+                <LessonCard item={item} type={"iyun"} />
               </div>
             ))}
           </div>

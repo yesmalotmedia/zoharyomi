@@ -4,7 +4,7 @@ import { fetchItem } from "@/utils/wixFetch";
 export default async function LessonPage(props) {
   const { lessonId } = await props.params;
 
-  const data = (await fetchItem("Import1", lessonId)) ?? {};
+  const data = (await fetchItem("pshat", lessonId)) ?? {};
   const item = data.item;
 
   if (!item) {

@@ -1,7 +1,8 @@
-import { fetchFromWix } from "@/utils/wixFetch";
-import { COLLECTIONS } from "@/config/collections";
+import { fetchCollection } from "@/utils/wixFetch";
 
 export async function GET() {
-  const data = await fetchFromWix(COLLECTIONS.pshat);
-  return Response.json(data.items || data);
+  const data = await fetchCollection("pshat");
+
+  // מונע קריסה גם אם Wix מחזיר JSON ריק
+  return Response.json(data ?? { items: [], error: "Empty response from Wix" });
 }

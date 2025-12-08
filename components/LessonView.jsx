@@ -65,7 +65,8 @@ export default function LessonView({ item }) {
     <div style={styles.container}>
       {/* פרטים על השיעור */}
       <div style={styles.details}>
-        פרשת {item.parasha} • דף {item.daf} עמוד {item.page} • פסקה {item.par}
+        פרשת {item.parasha} • דף {item.daf} עמוד {item.page}
+        {item.par && <> • פסקה {item.par}</>}
       </div>
 
       {/* סרטון יוטיוב */}

@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 
-export default function LessonCard({ item }) {
+export default function LessonCard({ type, item }) {
   const thumb = extractThumbnail(item);
-
   return (
     <Link
-      href={`/shiur/iyun/${item._id}`}
+      href={`/shiur/${type}/${item._id}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <div style={styles.card}>
@@ -24,8 +23,10 @@ export default function LessonCard({ item }) {
         {/* טקסט */}
         <div style={styles.textWrapper}>
           <div style={styles.title}>פרשת {item.parasha}</div>
+
           <div style={styles.details}>
-            דף {item.daf} עמוד {item.page} • פסקה {item.par}
+            דף {item.daf} עמוד {item.page}
+            {item.par && <> • פסקה {item.par}</>}
           </div>
         </div>
       </div>
