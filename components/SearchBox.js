@@ -1,28 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Fuse from "fuse.js";
 import LessonCard from "@/components/LessonCard";
 
 export default function SearchBox({ lessons }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
 
-  // מכינים את Fuse
-  const fuse = new Fuse(lessons, {
-    keys: ["parasha", "title", "hebrew", "aramit", "daf", "page", "par"],
-    threshold: 0.32, // רגישות לטעויות
-    minMatchCharLength: 2,
-  });
-
   useEffect(() => {
     if (query.trim() === "") {
       setResults([]);
       return;
     }
-
-    const found = fuse.search(query).map((r) => r.item);
-    setResults(found);
   }, [query]);
 
   return (
