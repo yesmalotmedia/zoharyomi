@@ -80,7 +80,7 @@ export default function HomePage() {
           <MenuItem
             href="/shiur/pshat"
             icon={<FaClock size={32} color="white" />}
-            label="שיעורים קצרים"
+            label="שיעורי פשט "
             mobile={isMobile}
           />
 

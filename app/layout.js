@@ -9,7 +9,7 @@ const heebo = Heebo({
 });
 
 export const metadata = {
-  title: "העמוד היומי בזוהר",
+  title: "הלימוד היומי בזוהר",
   description: "לימוד הזוהר היומי בארץ ובעולם",
 };
 

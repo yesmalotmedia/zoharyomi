@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,9 +9,11 @@ import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
   const whatsappLink =
     process.env.NEXT_PUBLIC_WHATSAPP_LINK ||
     "https://chat.whatsapp.com/Jho0f5IWHZW3rFzWu5s1X9";
+
   // לזהות מובייל
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -37,16 +40,16 @@ export default function Navbar() {
         </div>
 
         {/* כותרת במובייל בלבד */}
-        {isMobile && <span style={styles.mobileTitle}>העמוד היומי בזוהר</span>}
+        {isMobile && <span style={styles.mobileTitle}>הלימוד היומי בזוהר</span>}
 
         {/* דסקטופ */}
         {!isMobile && (
           <div style={styles.desktopRow}>
-            <span style={styles.title}>העמוד היומי בזוהר</span>
+            <span style={styles.title}>הלימוד היומי בזוהר</span>
 
             <div style={styles.menuDesktop}>
-              <NavLink href="/shiur/iyun">שיעורים בעיון</NavLink>
-              <NavLink href="/shiur/pshat">שיעורים קצרים</NavLink>
+              <NavLink href="/shiur/iyun">שיעורי עיון</NavLink>
+              <NavLink href="/shiur/pshat">שיעורי פשט</NavLink>
               <NavLink href="/about">אודות</NavLink>
 
               <a
@@ -78,7 +81,7 @@ export default function Navbar() {
               transform: open ? "translateX(0%)" : "translateX(-100%)",
             }}
           >
-            {/* כפתור סגירה בקצה השמאלי */}
+            {/* כפתור סגירה */}
             <button style={styles.closeBtn} onClick={() => setOpen(false)}>
               <FaTimes size={26} color="white" />
             </button>
@@ -106,7 +109,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* רקע כהה --- סוגר בלחיצה */}
+          {/* רקע חשוך */}
           {open && (
             <div style={styles.backdrop} onClick={() => setOpen(false)} />
           )}
@@ -222,7 +225,7 @@ const styles = {
   closeBtn: {
     position: "absolute",
     top: 16,
-    right: 16, // ← במקום left
+    right: 16,
     background: "none",
     border: "none",
     cursor: "pointer",
