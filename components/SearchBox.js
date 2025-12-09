@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, startTransition } from "react";
 import LessonCard from "@/components/LessonCard";
 
 export default function SearchBox({ lessons }) {
@@ -12,11 +12,12 @@ export default function SearchBox({ lessons }) {
     const q = query.trim();
 
     if (q === "") {
-      setResults([]);
+      startTransition(() => {
+        setResults([]);
+      });
       return;
     }
 
-    // חיפוש פשוט בכל השדות הרלוונטיים
     const filtered = lessons.filter((item) => {
       const text = `${item.parasha || ""} ${item.daf || ""} ${
         item.page || ""
@@ -25,12 +26,13 @@ export default function SearchBox({ lessons }) {
       return text.includes(q.toLowerCase());
     });
 
-    setResults(filtered);
+    startTransition(() => {
+      setResults(filtered);
+    });
   }, [query, lessons]);
 
   return (
     <div style={{ marginTop: 20, direction: "rtl" }}>
-      {/* שדה החיפוש */}
       <input
         type="text"
         placeholder="חפש שיעור לפי פרשה, דף, עמוד, או מילת מפתח…"
@@ -46,7 +48,6 @@ export default function SearchBox({ lessons }) {
         }}
       />
 
-      {/* תוצאות */}
       <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
         {results.length > 0 &&
           results.map((item) => (
@@ -54,7 +55,6 @@ export default function SearchBox({ lessons }) {
           ))}
       </div>
 
-      {/* הודעה כשאין תוצאות */}
       {query.length > 1 && results.length === 0 && (
         <div style={{ padding: 10, color: "#888" }}>
           לא נמצאו תוצאות לחיפוש &quot;{query}&quot;
