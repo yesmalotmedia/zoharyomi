@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,18 +9,32 @@ export default function SearchBox({ lessons }) {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    if (query.trim() === "") {
+    const q = query.trim();
+
+    // אם החיפוש ריק — אפס תוצאות
+    if (q === "") {
       setResults([]);
       return;
     }
-  }, [query]);
+
+    // חיפוש פשוט — ללא Fuse
+    const filtered = lessons.filter((item) => {
+      const text = `${item.parasha || ""} ${item.daf || ""} ${
+        item.page || ""
+      } ${item.hebrew || ""} ${item.aramit || ""}`.toLowerCase();
+
+      return text.includes(q.toLowerCase());
+    });
+
+    setResults(filtered);
+  }, [query, lessons]);
 
   return (
     <div style={{ marginTop: 20, direction: "rtl" }}>
       {/* שדה החיפוש */}
       <input
         type="text"
-        placeholder="חפש שיעור לפי פרשה, דף, מילה בעברית או ארמית…"
+        placeholder="חפש שיעור לפי פרשה, דף, עמוד, או מילת מפתח…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         style={{
@@ -35,13 +50,15 @@ export default function SearchBox({ lessons }) {
       {/* תוצאות */}
       <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
         {results.length > 0 &&
-          results.map((item) => <LessonCard key={item._id} item={item} />)}
+          results.map((item) => (
+            <LessonCard key={item._id} item={item} type={item.type} />
+          ))}
       </div>
 
       {/* הודעה כשאין תוצאות */}
       {query.length > 1 && results.length === 0 && (
         <div style={{ padding: 10, color: "#888" }}>
-          לא נמצאו תוצאות לחיפוש "{query}"
+          לא נמצאו תוצאות לחיפוש &quot;{query}&quot;
         </div>
       )}
     </div>

@@ -35,10 +35,15 @@ export default function SearchFilters({ lessons, onResults }) {
 
     if (parasha)
       filtered = filtered.filter((l) => clean(l.parasha) === clean(parasha));
+
     if (daf) filtered = filtered.filter((l) => clean(l.daf) === clean(daf));
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     onResults(filtered);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parasha, daf, lessons]);
+  // השמטנו onResults ו-hasLessons כדי לא לייצר רינדור אינסופי
 
   if (!hasLessons) return null;
 
