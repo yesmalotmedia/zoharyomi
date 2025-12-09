@@ -11,13 +11,12 @@ export default function SearchBox({ lessons }) {
   useEffect(() => {
     const q = query.trim();
 
-    // אם החיפוש ריק — אפס תוצאות
     if (q === "") {
       setResults([]);
       return;
     }
 
-    // חיפוש פשוט — ללא Fuse
+    // חיפוש פשוט בכל השדות הרלוונטיים
     const filtered = lessons.filter((item) => {
       const text = `${item.parasha || ""} ${item.daf || ""} ${
         item.page || ""
@@ -51,7 +50,7 @@ export default function SearchBox({ lessons }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
         {results.length > 0 &&
           results.map((item) => (
-            <LessonCard key={item._id} item={item} type={item.type} />
+            <LessonCard key={item._id} item={item} type="pshat" />
           ))}
       </div>
 
