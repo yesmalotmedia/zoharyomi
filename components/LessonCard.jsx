@@ -1,27 +1,18 @@
-/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 
 export default function LessonCard({ type, item }) {
   const thumb = extractThumbnail(item);
-
   return (
     <Link
       href={`/shiur/${type}/${item._id}`}
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <div style={styles.card}>
-        {/* תמונה */}
+        {/* תמונת תצוגה מקדימה */}
         <div style={styles.thumbnailWrapper}>
-          <Image
-            src={thumb}
-            alt={`תמונה לשיעור פרשת ${item.parasha}`}
-            fill
-            style={{ objectFit: "cover" }}
-            sizes="300px"
-          />
+          <img src={thumb} style={styles.thumbnail} />
 
           {/* אייקון Play */}
           <div style={styles.playIconWrapper}>
@@ -47,8 +38,8 @@ export default function LessonCard({ type, item }) {
 function extractThumbnail(item) {
   try {
     const videoNode = item?.youtube?.nodes?.find((n) => n.type === "VIDEO");
-    const url = videoNode?.videoData?.video?.src?.url;
 
+    const url = videoNode?.videoData?.video?.src?.url;
     if (!url) return "/placeholder.jpg";
 
     let id = "";
@@ -76,12 +67,27 @@ const styles = {
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
 
+  /* הובר כמו יוטיוב */
+  cardHover: {
+    transform: "scale(1.02)",
+    boxShadow: "0 6px 22px rgba(0,0,0,0.18)",
+  },
+
   thumbnailWrapper: {
     position: "relative",
     width: "100%",
-    paddingBottom: "56.25%", // יחס 16:9
+    paddingBottom: "56.25%", // 16:9
     overflow: "hidden",
     background: "#000",
+  },
+
+  thumbnail: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    top: 0,
+    left: 0,
   },
 
   playIconWrapper: {
