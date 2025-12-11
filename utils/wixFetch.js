@@ -90,12 +90,26 @@ export async function fetchItem(collection, id) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "force-cache",
-
     body: JSON.stringify({ collection, id }),
   });
 
+  // 🔹 אם זה לא OK – נבדוק למה
   if (!res.ok) {
-    throw new Error(`Wix fetch failed (${res.status}): ${await res.text()}`);
+    let payload = null;
+
+    try {
+      payload = await res.json();
+    } catch (_) {}
+
+    // ✔ מקרה צפוי: פריט לא נמצא
+    if (res.status === 400 && payload?.error === "Item not found") {
+      return null;
+    }
+
+    // ❌ כל דבר אחר – שגיאה אמיתית
+    throw new Error(
+      `Wix fetch failed (${res.status}): ${JSON.stringify(payload)}`
+    );
   }
 
   return safeJson(res);

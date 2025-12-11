@@ -6,7 +6,11 @@ export default function LessonCard({ type, item }) {
   const thumb = extractThumbnail(item);
   return (
     <Link
-      href={`/shiur/${type}/${item._id}`}
+      href={
+        type == "iyun"
+          ? `/shiur/${type}/${item._id}`
+          : `/shiur/${type}/${item.pageid}`
+      }
       style={{ textDecoration: "none", color: "inherit" }}
     >
       <div style={styles.card}>
