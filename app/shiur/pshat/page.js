@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import LessonCard from "@/components/LessonCard";
 import SearchFilters from "@/components/SearchFilters";
 
-export default function IyunPage() {
+export default function PshatPage() {
   const [allLessons, setAllLessons] = useState([]);
   const [filteredLessons, setFilteredLessons] = useState([]);
   const [visibleLessons, setVisibleLessons] = useState([]);
@@ -13,40 +13,36 @@ export default function IyunPage() {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // --- טעינת כל השיעורים ---
-  // --- טעינת כל השיעורים ---
   useEffect(() => {
-    async function load() {
-      try {
-        setLoadingInitial(true);
-        const res = await fetch("/api/pshat");
-        const data = await res.json();
-
-        // ממיינים לפי position (מספר)
-        const sorted = [...data.items].sort((b, a) => {
-          return (a.pageid ?? 0) - (b.pageid ?? 0);
-        });
-
-        setAllLessons(sorted);
-        setFilteredLessons(sorted);
-        setVisibleLessons(sorted.slice(0, 10));
-      } finally {
-        setLoadingInitial(false);
-      }
-    }
-
-    load();
+    loadInitialFast();
   }, []);
 
-  // --- כאשר הסינון משתנה ---
+  async function loadInitialFast() {
+    try {
+      setLoadingInitial(true);
+
+      const res = await fetch("/api/pshat");
+      const fullJson = await res.json(); // קריאה אחת ויחידה
+      const items = fullJson.items ?? [];
+
+      // מציג מייד את 10 הראשונים
+      setVisibleLessons(items.slice(0, 10));
+
+      // בשלב שני שומר את הכל
+      setAllLessons(items);
+      setFilteredLessons(items);
+    } finally {
+      setLoadingInitial(false);
+    }
+  }
+
   function handleFilterResults(results) {
     setFilteredLessons(results);
     setCount(10);
     setVisibleLessons(results.slice(0, 10));
   }
 
-  // --- טעינת עוד ---
-  async function loadMore() {
+  function loadMore() {
     setLoadingMore(true);
 
     setTimeout(() => {
@@ -54,14 +50,13 @@ export default function IyunPage() {
       setCount(newCount);
       setVisibleLessons(filteredLessons.slice(0, newCount));
       setLoadingMore(false);
-    }, 400); // כדי לקבל אנימציה חלקה
+    }, 300);
   }
 
   return (
     <div style={{ padding: 20, direction: "rtl" }}>
-      <h1 style={{ textAlign: "right" }}>שיעורי פשט</h1>
+      <h1 style={{ textAlign: "right", color: "#0a3a75" }}>שיעורי פשט</h1>
 
-      {/* --- Spinner טעינה ראשונית --- */}
       {loadingInitial && (
         <div style={styles.spinnerWrapper}>
           <div style={styles.spinner}></div>
@@ -75,12 +70,11 @@ export default function IyunPage() {
           <div style={styles.grid}>
             {visibleLessons.map((item) => (
               <div key={item._id} style={styles.cardWrapper}>
-                <LessonCard item={item} type={"pshat"} />
+                <LessonCard item={item} type="pshat" />
               </div>
             ))}
           </div>
 
-          {/* כפתור טען עוד */}
           {visibleLessons.length < filteredLessons.length && (
             <button
               style={styles.loadMore}
@@ -100,6 +94,8 @@ export default function IyunPage() {
   );
 }
 
+/* -----------------------------  styles  ----------------------------- */
+
 const styles = {
   grid: {
     display: "flex",
@@ -107,6 +103,10 @@ const styles = {
     marginTop: 25,
     flexWrap: "wrap",
     justifyContent: "center",
+  },
+
+  cardWrapper: {
+    width: "300px",
   },
 
   loadMore: {
@@ -121,12 +121,12 @@ const styles = {
     display: "block",
   },
 
-  /* --- Spinner מרכזי בזמן טעינה ראשונית --- */
   spinnerWrapper: {
     display: "flex",
     justifyContent: "center",
     marginTop: 80,
   },
+
   spinner: {
     width: 50,
     height: 50,
@@ -136,7 +136,6 @@ const styles = {
     animation: "spin 0.8s linear infinite",
   },
 
-  /* --- Spinner קטן ל־"טען עוד" --- */
   smallSpinner: {
     width: "20px",
     height: "20px",
@@ -148,7 +147,7 @@ const styles = {
   },
 };
 
-/* אנימציית ספין */
+/* הזרקת אנימציית spin */
 if (typeof document !== "undefined") {
   const css = `
     @keyframes spin {

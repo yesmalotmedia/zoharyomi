@@ -1,8 +1,25 @@
 import { fetchCollection } from "@/utils/wixFetch";
 
-export async function GET() {
-  const data = await fetchCollection("pshat");
+export const revalidate = 60;
 
-  // מונע קריסה גם אם Wix מחזיר JSON ריק
-  return Response.json(data ?? { items: [], error: "Empty response from Wix" });
+export async function GET() {
+  try {
+    const data = await fetchCollection("pshat");
+
+    const items = Array.isArray(data?.items) ? data.items : [];
+
+    // מיון לפי pageid
+    items.sort((a, b) => {
+      const pa = Number(a.pageid ?? 0);
+      const pb = Number(b.pageid ?? 0);
+      return pb - pa; // חדש ראשון
+    });
+
+    return Response.json({ items });
+  } catch (err) {
+    console.error("❌ ERROR in /api/pshat:", err.message);
+
+    // מחזיר JSON תקין גם כשיש בעיה
+    return Response.json({ items: [] });
+  }
 }

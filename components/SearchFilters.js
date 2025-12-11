@@ -13,10 +13,78 @@ export default function SearchFilters({ lessons, onResults }) {
       .trim()
       .replace(/\s+/g, " ");
 
+  // -------------------------
+  // סדר כרונולוגי של פרשות
+  // -------------------------
+  const PARASHA_ORDER = [
+    "בראשית",
+    "נח",
+    "לך לך",
+    "וירא",
+    "חיי שרה",
+    "תולדות",
+    "ויצא",
+    "וישלח",
+    "וישב",
+    "מקץ",
+    "ויגש",
+    "ויחי",
+    "שמות",
+    "וארא",
+    "בא",
+    "בשלח",
+    "יתרו",
+    "משפטים",
+    "תרומה",
+    "תצווה",
+    "כי תשא",
+    "ויקהל",
+    "פקודי",
+    "ויקרא",
+    "צו",
+    "שמיני",
+    "תזריע",
+    "מצורע",
+    "אחרי מות",
+    "קדושים",
+    "אמור",
+    "בהר",
+    "בחוקותי",
+    "במדבר",
+    "נשא",
+    "בהעלותך",
+    "שלח",
+    "קורח",
+    "חוקת",
+    "בלק",
+    "פינחס",
+    "מטות",
+    "מסעי",
+    "דברים",
+    "ואתחנן",
+    "עקב",
+    "ראה",
+    "שופטים",
+    "כי תצא",
+    "כי תבוא",
+    "נצבים",
+    "וילך",
+    "האזינו",
+    "וזאת הברכה",
+  ];
+
+  // -------------------------
+  // רשימת פרשות — ממויינת לפי הסדר האמיתי
+  // -------------------------
   const parashiot = hasLessons
     ? Array.from(new Set(lessons.map((l) => clean(l.parasha))))
+        .filter((p) => PARASHA_ORDER.includes(p)) // נקה שגיאות כתיב
+        .sort((a, b) => PARASHA_ORDER.indexOf(a) - PARASHA_ORDER.indexOf(b))
     : [];
 
+  // -------------------------
+  // דפים — ממיינים מספרית
+  // -------------------------
   const dafim =
     parasha && hasLessons
       ? Array.from(
@@ -25,9 +93,12 @@ export default function SearchFilters({ lessons, onResults }) {
               .filter((l) => clean(l.parasha) === clean(parasha))
               .map((l) => clean(l.daf))
           )
-        )
+        ).sort((a, b) => Number(a) - Number(b))
       : [];
 
+  // -------------------------
+  // סינון + החזרת תוצאות
+  // -------------------------
   useEffect(() => {
     if (!hasLessons) return;
 
@@ -38,15 +109,19 @@ export default function SearchFilters({ lessons, onResults }) {
 
     if (daf) filtered = filtered.filter((l) => clean(l.daf) === clean(daf));
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    onResults(filtered);
+    // מיון לפי pageid לשמירה על סדר תקין
+    filtered = [...filtered].sort(
+      (a, b) => (Number(b.pageid) || 0) - (Number(a.pageid) || 0)
+    );
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    onResults(filtered);
   }, [parasha, daf, lessons]);
-  // השמטנו onResults ו-hasLessons כדי לא לייצר רינדור אינסופי
 
   if (!hasLessons) return null;
 
+  // -------------------------
+  // UI
+  // -------------------------
   return (
     <div style={styles.wrapper}>
       {/* פרשה */}

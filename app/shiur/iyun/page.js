@@ -13,17 +13,20 @@ export default function IyunPage() {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // --- טעינת כל השיעורים ---
   useEffect(() => {
     async function load() {
       try {
         setLoadingInitial(true);
+
         const res = await fetch("/api/iyun");
         const data = await res.json();
 
-        setAllLessons(data.items);
-        setFilteredLessons(data.items);
-        setVisibleLessons(data.items.slice(0, 10));
+        // כבר ממויין לפי pageid מה-API
+        const items = data.items ?? [];
+
+        setAllLessons(items);
+        setFilteredLessons(items);
+        setVisibleLessons(items.slice(0, 10)); // טעינה מיידית
       } finally {
         setLoadingInitial(false);
       }
@@ -32,15 +35,17 @@ export default function IyunPage() {
     load();
   }, []);
 
-  // --- כאשר הסינון משתנה ---
   function handleFilterResults(results) {
-    setFilteredLessons(results);
+    const sorted = [...results].sort(
+      (a, b) => Number(a.pageid) - Number(b.pageid)
+    );
+
+    setFilteredLessons(sorted);
     setCount(10);
-    setVisibleLessons(results.slice(0, 10));
+    setVisibleLessons(sorted.slice(0, 10));
   }
 
-  // --- טעינת עוד ---
-  async function loadMore() {
+  function loadMore() {
     setLoadingMore(true);
 
     setTimeout(() => {
@@ -48,14 +53,13 @@ export default function IyunPage() {
       setCount(newCount);
       setVisibleLessons(filteredLessons.slice(0, newCount));
       setLoadingMore(false);
-    }, 400); // כדי לקבל אנימציה חלקה
+    }, 300);
   }
 
   return (
     <div style={{ padding: 20, direction: "rtl" }}>
-      <h1 style={{ textAlign: "right" }}>שיעורי עיון</h1>
+      <h1 style={{ textAlign: "right", color: "#0a3a75" }}>שיעורי עיון</h1>
 
-      {/* --- Spinner טעינה ראשונית --- */}
       {loadingInitial && (
         <div style={styles.spinnerWrapper}>
           <div style={styles.spinner}></div>
@@ -69,12 +73,11 @@ export default function IyunPage() {
           <div style={styles.grid}>
             {visibleLessons.map((item) => (
               <div key={item._id} style={styles.cardWrapper}>
-                <LessonCard item={item} type={"iyun"} />
+                <LessonCard item={item} type="iyun" />
               </div>
             ))}
           </div>
 
-          {/* כפתור טען עוד */}
           {visibleLessons.length < filteredLessons.length && (
             <button
               style={styles.loadMore}
@@ -115,12 +118,12 @@ const styles = {
     display: "block",
   },
 
-  /* --- Spinner מרכזי בזמן טעינה ראשונית --- */
   spinnerWrapper: {
     display: "flex",
     justifyContent: "center",
     marginTop: 80,
   },
+
   spinner: {
     width: 50,
     height: 50,
@@ -130,7 +133,6 @@ const styles = {
     animation: "spin 0.8s linear infinite",
   },
 
-  /* --- Spinner קטן ל־"טען עוד" --- */
   smallSpinner: {
     width: "20px",
     height: "20px",
@@ -142,7 +144,6 @@ const styles = {
   },
 };
 
-/* אנימציית ספין */
 if (typeof document !== "undefined") {
   const css = `
     @keyframes spin {

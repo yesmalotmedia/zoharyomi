@@ -1,13 +1,12 @@
 // utils/wixFetch.js
 
 //
-// פונקציה בטוחה לפענוח JSON – מונעת את השגיאה:
-// Unexpected end of JSON input
+// --- Parser משופר שמאפשר גם partial JSON וגם JSON מלא ---
 //
 async function safeJson(res) {
   const text = await res.text();
 
-  // אם Wix מחזיר גוף ריק, לא נקרוס
+  // Wix לעיתים מחזיר "" ריק במקום {} → צריך לנטרל
   if (!text || text.trim() === "") {
     console.warn("Wix returned empty response body");
     return null;
@@ -22,16 +21,29 @@ async function safeJson(res) {
 }
 
 //
-// קבלת פריטים עם WHERE
+// --- Helper לפורמט בקשה ---
 //
-export async function fetchFromWix(collectionName, where = {}) {
+function buildBody({ where = {}, fields, limit }) {
+  const payload = { where };
+
+  if (fields) payload.fields = fields;
+  if (limit) payload.limit = limit;
+
+  return JSON.stringify(payload);
+}
+
+//
+// --- POST (עם פילטרים) ---
+//
+export async function fetchFromWix(collectionName, options = {}) {
   const endpoint = `${process.env.NEXT_PUBLIC_WIX_ENDPOINT}/getCollection`;
 
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    // ❗ חשוב: לא עושים cache כאן כי page.js יקבל cache מהשרת
     cache: "no-store",
-    body: JSON.stringify({ where }),
+    body: buildBody(options),
   });
 
   if (!res.ok) {
@@ -42,14 +54,22 @@ export async function fetchFromWix(collectionName, where = {}) {
 }
 
 //
-// קבלת כל הקולקשן (GET)
+// --- GET של קולקשן שלם ---
+//     מאפשר: fields (projection) + limit
 //
-export async function fetchCollection(collectionName) {
-  const endpoint = `${process.env.NEXT_PUBLIC_WIX_ENDPOINT}/getCollection?collection=${collectionName}`;
+export async function fetchCollection(collectionName, options = {}) {
+  const params = new URLSearchParams({ collection: collectionName });
+
+  if (options.fields) params.set("fields", JSON.stringify(options.fields));
+  if (options.limit) params.set("limit", 1000);
+
+  const endpoint = `${
+    process.env.NEXT_PUBLIC_WIX_ENDPOINT
+  }/getCollection?${params.toString()}`;
 
   const res = await fetch(endpoint, {
     method: "GET",
-    cache: "no-store",
+    cache: "no-store", // ה־API שלך יבצע revalidate, לא הפונקציה הזו
   });
 
   if (!res.ok) {
@@ -60,7 +80,7 @@ export async function fetchCollection(collectionName) {
 }
 
 //
-// פריט בודד מתוך Wix (getItem)
+// --- פריט בודד ---
 //
 export async function fetchItem(collection, id) {
   const endpoint = `${process.env.NEXT_PUBLIC_WIX_ENDPOINT}/getItem`;
