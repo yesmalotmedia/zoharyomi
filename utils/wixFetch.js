@@ -42,7 +42,7 @@ export async function fetchFromWix(collectionName, options = {}) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // ❗ חשוב: לא עושים cache כאן כי page.js יקבל cache מהשרת
-    cache: "no-store",
+    cache: "force-cache",
     body: buildBody(options),
   });
 
@@ -69,7 +69,8 @@ export async function fetchCollection(collectionName, options = {}) {
 
   const res = await fetch(endpoint, {
     method: "GET",
-    cache: "no-store", // ה־API שלך יבצע revalidate, לא הפונקציה הזו
+    cache: "force-cache",
+    // ה־API שלך יבצע revalidate, לא הפונקציה הזו
   });
 
   if (!res.ok) {
@@ -88,7 +89,8 @@ export async function fetchItem(collection, id) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    cache: "no-store",
+    cache: "force-cache",
+
     body: JSON.stringify({ collection, id }),
   });
 
