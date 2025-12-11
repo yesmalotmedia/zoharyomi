@@ -88,10 +88,10 @@ export default function Navbar() {
 
             <div style={styles.mobileLinks}>
               <NavLink href="/shiur/iyun" onClick={() => setOpen(false)}>
-                שיעורים בעיון
+                שיעורי עיון{" "}
               </NavLink>
               <NavLink href="/shiur/pshat" onClick={() => setOpen(false)}>
-                שיעורים קצרים
+                שיעורי פשט{" "}
               </NavLink>
               <NavLink href="/about" onClick={() => setOpen(false)}>
                 אודות
