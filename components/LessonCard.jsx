@@ -91,7 +91,7 @@ const styles = {
     height: "100%",
     objectFit: "cover",
     top: 0,
-    left: 0,
+    left: 0.1,
   },
 
   playIconWrapper: {
