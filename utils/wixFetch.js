@@ -89,7 +89,7 @@ export async function fetchItem(collection, id) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    cache: "force-cache",
+    cache: "no-cache",
     body: JSON.stringify({ collection, id }),
   });
 
