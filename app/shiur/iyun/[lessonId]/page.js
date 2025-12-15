@@ -11,5 +11,5 @@ export default async function LessonPage(props) {
     return <div style={{ padding: 40 }}>שיעור לא נמצא</div>;
   }
 
-  return <LessonView item={item} />;
+  return <LessonView item={item} type="iyun" />;
 }

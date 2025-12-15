@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-export default function LessonView({ item }) {
+export default function LessonView({ item, type }) {
   const [isMobile, setIsMobile] = useState(false);
   const [viewMode, setViewMode] = useState("both");
 
@@ -68,7 +68,19 @@ export default function LessonView({ item }) {
         פרשת {item.parasha} • דף {item.daf} עמוד {item.page}
         {item.par && <> • פסקה {item.par}</>}
       </div>
+      {/* ניווט בין שיעורים */}
+      <div style={styles.navWrapper}>
+        <a href={`/shiur/${type}/${item.pageid - 1}`} style={styles.navButton}>
+          → שיעור קודם
+        </a>
 
+        <a
+          href={`/shiur/${type}/${item.pageid + 1}`}
+          style={{ ...styles.navButton, ...styles.nextButton }}
+        >
+          שיעור הבא ←
+        </a>
+      </div>
       {/* סרטון יוטיוב */}
       {videoUrl && (
         <div
@@ -242,5 +254,37 @@ const styles = {
     whiteSpace: "pre-wrap",
     lineHeight: 1.9,
     fontSize: 17,
+  },
+  navWrapper: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 30,
+    marginTop: 10,
+    flexWrap: "wrap",
+  },
+
+  navButton: {
+    flex: 1,
+    textAlign: "center",
+    padding: "12px 16px",
+    borderRadius: 12,
+    background: "#f0f4fa",
+    color: "#0a3a75",
+    fontSize: 16,
+    fontWeight: 600,
+    textDecoration: "none",
+    border: "1px solid #d0d8e8",
+    transition: "all 0.2s ease",
+  },
+
+  nextButton: {
+    background: "#0a3a75",
+    color: "white",
+    border: "1px solid #0a3a75",
+  },
+  navButtonHover: {
+    transform: "translateY(-1px)",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
   },
 };

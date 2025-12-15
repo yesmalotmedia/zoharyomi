@@ -69,7 +69,7 @@ export async function fetchCollection(collectionName, options = {}) {
 
   const res = await fetch(endpoint, {
     method: "GET",
-    cache: "force-cache",
+    cache: "no-store",
     // ה־API שלך יבצע revalidate, לא הפונקציה הזו
   });
 
@@ -106,6 +106,23 @@ export async function fetchItem(collection, id) {
     throw new Error(
       `Wix fetch failed (${res.status}): ${JSON.stringify(payload)}`
     );
+  }
+
+  return res.json();
+}
+// ניווט לשיעור קודם / הבא (פשט)
+export async function fetchPshatNav(pageid) {
+  const endpoint = `${process.env.NEXT_PUBLIC_WIX_ENDPOINT}/getPshatNav`;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-cache",
+    body: JSON.stringify({ pageid }),
+  });
+
+  if (!res.ok) {
+    return null;
   }
 
   return res.json();

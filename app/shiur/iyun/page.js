@@ -37,7 +37,7 @@ export default function IyunPage() {
 
   function handleFilterResults(results) {
     const sorted = [...results].sort(
-      (a, b) => Number(a.pageid) - Number(b.pageid)
+      (a, b) => Number(b.pageid) - Number(a.pageid)
     );
 
     setFilteredLessons(sorted);
