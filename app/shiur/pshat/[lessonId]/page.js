@@ -9,7 +9,11 @@ export default async function LessonPage(props) {
   const item = data.item;
 
   if (!item) {
-    return <div style={{ padding: 40 }}>שיעור לא נמצא</div>;
+    return (
+      <div style={{ padding: 40 }}>
+        שיעור לא קיים , יתכן שהוא עדיין לא עלה לאתר...
+      </div>
+    );
   }
 
   return (
