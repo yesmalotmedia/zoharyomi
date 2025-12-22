@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaWhatsapp, FaBookOpen, FaClock, FaInfoCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import LastLessonCard from "@/components/LastLessonCard";
 
 export default function HomePage() {
   const [stage, setStage] = useState(0);
@@ -29,89 +30,93 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div style={styles.hero}>
-      <div style={styles.centerBlock}>
-        {/* לוגו + כותרת יחד */}
-        <div
-          style={{
-            ...styles.fadeItem,
-            ...styles.logoTitleWrapper(isMobile),
-            opacity: stage >= 1 ? 1 : 0,
-            transform: stage >= 1 ? "translateY(0)" : "translateY(10px)",
-          }}
-        >
-          <Image
-            src="/zoharlogo.png"
-            alt="לוגו"
-            width={isMobile ? 80 : 110}
-            height={isMobile ? 80 : 110}
-            style={{
-              filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.25))",
-            }}
-          />
-
-          <h1
+    <>
+      {/* כרטיס השיעור האחרון – יוצג רק אם יש נתונים */}
+      <LastLessonCard />
+      <div style={styles.hero}>
+        <div style={styles.centerBlock}>
+          {/* לוגו + כותרת יחד */}
+          <div
             style={{
               ...styles.fadeItem,
-              ...styles.title(isMobile),
-              opacity: stage >= 2 ? 1 : 0,
+              ...styles.logoTitleWrapper(isMobile),
+              opacity: stage >= 1 ? 1 : 0,
+              transform: stage >= 1 ? "translateY(0)" : "translateY(10px)",
             }}
           >
-            הלימוד היומי בזוהר
-          </h1>
-        </div>
+            <Image
+              src="/zoharlogo.png"
+              alt="לוגו"
+              width={isMobile ? 80 : 110}
+              height={isMobile ? 80 : 110}
+              style={{
+                filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.25))",
+              }}
+            />
 
-        {/* תפריט */}
-        <div
-          style={{
-            ...styles.fadeItem,
-            ...styles.menu(isMobile),
-            opacity: stage >= 3 ? 1 : 0,
-            transform: stage >= 3 ? "translateY(0)" : "translateY(18px)",
-          }}
-        >
-          <MenuItem
-            href="/shiur/iyun"
-            icon={<FaBookOpen size={32} color="white" />}
-            label="שיעורי עיון"
-            mobile={isMobile}
-          />
+            <h1
+              style={{
+                ...styles.fadeItem,
+                ...styles.title(isMobile),
+                opacity: stage >= 2 ? 1 : 0,
+              }}
+            >
+              הלימוד היומי בזוהר
+            </h1>
+          </div>
 
-          <MenuItem
-            href="/shiur/pshat"
-            icon={<FaClock size={32} color="white" />}
-            label="שיעורי פשט "
-            mobile={isMobile}
-          />
-
-          <MenuItem
-            href="/about"
-            icon={<FaInfoCircle size={32} color="white" />}
-            label="אודות"
-            mobile={isMobile}
-          />
-        </div>
-
-        {/* וואטסאפ */}
-        <div
-          style={{
-            ...styles.fadeItem,
-            ...styles.whatsappWrapper,
-            opacity: stage >= 4 ? 1 : 0,
-            transform: stage >= 4 ? "translateY(0)" : "translateY(20px)",
-          }}
-        >
-          <a
-            href={whatsappLink}
-            target="_blank"
-            style={styles.whatsapp(isMobile)}
+          {/* תפריט */}
+          <div
+            style={{
+              ...styles.fadeItem,
+              ...styles.menu(isMobile),
+              opacity: stage >= 3 ? 1 : 0,
+              transform: stage >= 3 ? "translateY(0)" : "translateY(18px)",
+            }}
           >
-            <FaWhatsapp size={26} style={{ marginLeft: 8 }} />
-            הצטרפו ללימוד היומי
-          </a>
+            <MenuItem
+              href="/shiur/iyun"
+              icon={<FaBookOpen size={32} color="white" />}
+              label="שיעורי עיון"
+              mobile={isMobile}
+            />
+
+            <MenuItem
+              href="/shiur/pshat"
+              icon={<FaClock size={32} color="white" />}
+              label="שיעורי פשט "
+              mobile={isMobile}
+            />
+
+            <MenuItem
+              href="/about"
+              icon={<FaInfoCircle size={32} color="white" />}
+              label="אודות"
+              mobile={isMobile}
+            />
+          </div>
+
+          {/* וואטסאפ */}
+          <div
+            style={{
+              ...styles.fadeItem,
+              ...styles.whatsappWrapper,
+              opacity: stage >= 4 ? 1 : 0,
+              transform: stage >= 4 ? "translateY(0)" : "translateY(20px)",
+            }}
+          >
+            <a
+              href={whatsappLink}
+              target="_blank"
+              style={styles.whatsapp(isMobile)}
+            >
+              <FaWhatsapp size={26} style={{ marginLeft: 8 }} />
+              הצטרפו ללימוד היומי
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
