@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Heebo } from "next/font/google";
 import ConditionalNavbar from "@/components/ConditionalNavbar";
+import { Analytics } from "@vercel/analytics/react"; // 👈 הוספה
 
 const heebo = Heebo({
   subsets: ["hebrew"],
@@ -30,6 +31,9 @@ export default function RootLayout({ children }) {
 
         {/* תוכן הדף */}
         <div>{children}</div>
+
+        {/* 👈 אנליטיקס של Vercel */}
+        <Analytics />
       </body>
     </html>
   );
