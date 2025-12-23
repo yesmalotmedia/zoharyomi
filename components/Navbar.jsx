@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
+import SocialLinks from "./SocialLinks";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -61,6 +62,7 @@ export default function Navbar() {
                 הצטרפו ללימוד היומי
               </a>
             </div>
+            <SocialLinks />
           </div>
         )}
 
@@ -107,6 +109,7 @@ export default function Navbar() {
                 הצטרפו ללימוד היומי
               </a>
             </div>
+            <SocialLinks />
           </div>
 
           {/* רקע חשוך */}
@@ -173,7 +176,7 @@ const styles = {
     flex: 1,
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: 32,
   },
 

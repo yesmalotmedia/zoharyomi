@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FaWhatsapp, FaBookOpen, FaClock, FaInfoCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import LastLessonCard from "@/components/LastLessonCard";
+import SocialLinks from "@/components/SocialLinks";
 
 export default function HomePage() {
   const [stage, setStage] = useState(0);
@@ -114,6 +115,8 @@ export default function HomePage() {
               הצטרפו ללימוד היומי
             </a>
           </div>
+          <br />
+          <SocialLinks />
         </div>
       </div>
     </>
