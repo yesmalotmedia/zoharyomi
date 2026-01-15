@@ -5,11 +5,8 @@ import { useState, useEffect, useRef } from "react";
 export default function LessonView({ item, type }) {
   const [isMobile, setIsMobile] = useState(false);
   const [viewMode, setViewMode] = useState("both");
-
-  // האם הווידאו במצב צף
   const [isFloating, setIsFloating] = useState(false);
 
-  // ref לווידאו הגדול בעמוד
   const videoRef = useRef(null);
 
   /* ------------------------ בדיקת מובייל ------------------------ */
@@ -20,27 +17,18 @@ export default function LessonView({ item, type }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  /* ------------------------ מנגנון וידאו צף ------------------------ */
+  /* ------------------------ וידאו צף ------------------------ */
   useEffect(() => {
     const onScroll = () => {
       const scroll = window.scrollY;
-
-      // כניסה למצב צף
-      if (!isFloating && scroll > 350) {
-        setIsFloating(true);
-      }
-
-      // חזרה למצב רגיל
-      if (isFloating && scroll < 100) {
-        setIsFloating(false);
-      }
+      if (!isFloating && scroll > 350) setIsFloating(true);
+      if (isFloating && scroll < 100) setIsFloating(false);
     };
-
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, [isFloating]);
 
-  /* ------------------------ המרה ל-YouTube Embed ------------------------ */
+  /* ------------------------ YouTube embed ------------------------ */
   function convertToEmbed(url) {
     try {
       let id = "";
@@ -49,9 +37,7 @@ export default function LessonView({ item, type }) {
       } else {
         id = new URL(url).searchParams.get("v");
       }
-      return id
-        ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&showinfo=0&color=white`
-        : "";
+      return id ? `https://www.youtube.com/embed/${id}?rel=0` : "";
     } catch {
       return "";
     }
@@ -63,17 +49,17 @@ export default function LessonView({ item, type }) {
   /* ------------------------ רנדור ------------------------ */
   return (
     <div style={styles.container}>
-      {/* פרטים על השיעור */}
+      {/* פרטי השיעור */}
       <div style={styles.details}>
         פרשת {item.parasha} • דף {item.daf} עמוד {item.page}
         {item.par && <> • פסקה {item.par}</>}
       </div>
-      {/* ניווט בין שיעורים */}
+
+      {/* ניווט */}
       <div style={styles.navWrapper}>
         <a href={`/shiur/${type}/${item.pageid - 1}`} style={styles.navButton}>
           → שיעור קודם
         </a>
-
         <a
           href={`/shiur/${type}/${item.pageid + 1}`}
           style={{ ...styles.navButton, ...styles.nextButton }}
@@ -81,7 +67,8 @@ export default function LessonView({ item, type }) {
           שיעור הבא ←
         </a>
       </div>
-      {/* סרטון יוטיוב */}
+
+      {/* וידאו */}
       {videoUrl && (
         <div
           ref={videoRef}
@@ -99,64 +86,85 @@ export default function LessonView({ item, type }) {
         </div>
       )}
 
-      {/* כפתורי מצבי צפייה */}
+      {/* כפתורי מצבים */}
       <div style={styles.modeButtons}>
-        <button
-          onClick={() => setViewMode("he")}
-          style={{
-            ...styles.modeBtn,
-            background: viewMode === "he" ? "#0a3a75" : "#eee",
-            color: viewMode === "he" ? "white" : "black",
-          }}
-        >
-          עברית
-        </button>
-
-        <button
-          onClick={() => setViewMode("ar")}
-          style={{
-            ...styles.modeBtn,
-            background: viewMode === "ar" ? "#0a3a75" : "#eee",
-            color: viewMode === "ar" ? "white" : "black",
-          }}
-        >
-          ארמית
-        </button>
-
-        <button
-          onClick={() => setViewMode("both")}
-          style={{
-            ...styles.modeBtn,
-            background: viewMode === "both" ? "#0a3a75" : "#eee",
-            color: viewMode === "both" ? "white" : "black",
-          }}
-        >
-          משולב
-        </button>
+        {["he", "ar", "both", "sources"].map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            style={{
+              ...styles.modeBtn,
+              background: viewMode === mode ? "#0a3a75" : "#eee",
+              color: viewMode === mode ? "white" : "black",
+            }}
+          >
+            {mode === "he" && "עברית"}
+            {mode === "ar" && "ארמית"}
+            {mode === "both" && "משולב"}
+            {mode === "sources" && "דפי מקורות"}
+          </button>
+        ))}
       </div>
 
-      {/* תוכן בעברית/ארמית */}
-      <div
-        style={{
-          ...styles.columnsWrapper,
-          flexDirection:
-            viewMode === "both" ? (isMobile ? "column" : "row") : "column",
-        }}
-      >
-        {(viewMode === "he" || viewMode === "both") && (
-          <div style={styles.column}>
-            <h3 style={styles.sectionTitle}>עברית</h3>
-            <p style={styles.text}>{item.hebrew}</p>
-          </div>
-        )}
+      {/* אזור תוכן */}
+      {viewMode !== "sources" && (
+        <div
+          style={{
+            ...styles.columnsWrapper,
+            flexDirection:
+              viewMode === "both" ? (isMobile ? "column" : "row") : "column",
+          }}
+        >
+          {(viewMode === "he" || viewMode === "both") && (
+            <div style={styles.column}>
+              <h3 style={styles.sectionTitle}>עברית</h3>
+              <p style={styles.text}>{item.hebrew}</p>
+            </div>
+          )}
 
-        {(viewMode === "ar" || viewMode === "both") && (
-          <div style={styles.column}>
-            <h3 style={styles.sectionTitle}>ארמית</h3>
-            <p style={styles.text}>{item.aramit}</p>
-          </div>
-        )}
-      </div>
+          {(viewMode === "ar" || viewMode === "both") && (
+            <div style={styles.column}>
+              <h3 style={styles.sectionTitle}>ארמית</h3>
+              <p style={styles.text}>{item.aramit}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* דפי מקורות – במקום הטקסט */}
+      {/* {viewMode === "sources" && item?.sources?.length > 0 && (
+        <div style={styles.sourcesWrapper}>
+          {item.sources
+            .sort((a, b) => a.order - b.order)
+            .map((page, i) => (
+              <img
+                key={i}
+                src={page.imageUrl}
+                alt={`דף מקורות ${i + 1}`}
+                style={styles.sourcePage}
+                loading="lazy"
+              />
+            ))}
+        </div>
+      )} */}
+
+      {/* דפי מקורות – במקום הטקסט */}
+      {viewMode === "sources" && (
+        <div style={styles.sourcesWrapper}>
+          <iframe
+            src={item.sources}
+            title="דף מקורות"
+            style={{
+              width: "100%",
+              height: "90vh",
+              border: "none",
+              borderRadius: 12,
+              boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+            }}
+            loading="lazy"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -179,24 +187,20 @@ const styles = {
     color: "#0a3a75",
   },
 
-  /* מצב רגיל */
   videoWrapper: {
     position: "relative",
     width: "100%",
-    paddingBottom: "56.25%", // 16:9
-    height: 0,
+    paddingBottom: "56.25%",
     marginBottom: 20,
-    overflow: "hidden",
     borderRadius: 12,
+    overflow: "hidden",
     background: "#000",
-    transition: "all 0.1s ease",
   },
 
-  /* מצב צף */
   floatingVideoWrapper: {
     position: "fixed",
-    width: "300px",
-    height: "168px", // 16:9
+    width: 300,
+    height: 168,
     bottom: 20,
     right: 20,
     zIndex: 9999,
@@ -205,13 +209,11 @@ const styles = {
     background: "#000",
     boxShadow: "0 4px 15px rgba(0,0,0,0.25)",
     cursor: "pointer",
-    transition: "all 0.s ease",
   },
 
   video: {
     position: "absolute",
-    top: 0,
-    left: 0,
+    inset: 0,
     width: "100%",
     height: "100%",
     border: "none",
@@ -221,6 +223,7 @@ const styles = {
     display: "flex",
     gap: 10,
     marginBottom: 25,
+    flexWrap: "wrap",
   },
 
   modeBtn: {
@@ -255,12 +258,11 @@ const styles = {
     lineHeight: 1.9,
     fontSize: 17,
   },
+
   navWrapper: {
     display: "flex",
-    justifyContent: "space-between",
     gap: 12,
     marginBottom: 30,
-    marginTop: 10,
     flexWrap: "wrap",
   },
 
@@ -275,7 +277,6 @@ const styles = {
     fontWeight: 600,
     textDecoration: "none",
     border: "1px solid #d0d8e8",
-    transition: "all 0.2s ease",
   },
 
   nextButton: {
@@ -283,8 +284,17 @@ const styles = {
     color: "white",
     border: "1px solid #0a3a75",
   },
-  navButtonHover: {
-    transform: "translateY(-1px)",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+
+  /* דפי מקורות */
+  sourcesWrapper: {
+    maxWidth: 800,
+    margin: "0 auto",
+  },
+
+  sourcePage: {
+    width: "100%",
+    marginBottom: 32,
+    background: "white",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
   },
 };
