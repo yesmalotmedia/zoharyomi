@@ -88,22 +88,24 @@ export default function LessonView({ item, type }) {
 
       {/* כפתורי מצבים */}
       <div style={styles.modeButtons}>
-        {["he", "ar", "both", "sources"].map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            style={{
-              ...styles.modeBtn,
-              background: viewMode === mode ? "#0a3a75" : "#eee",
-              color: viewMode === mode ? "white" : "black",
-            }}
-          >
-            {mode === "he" && "עברית"}
-            {mode === "ar" && "ארמית"}
-            {mode === "both" && "משולב"}
-            {mode === "sources" && "דפי מקורות"}
-          </button>
-        ))}
+        {["he", "ar", "both", "sources"]
+          .filter((mode) => mode !== "sources" || type == "iyun")
+          .map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              style={{
+                ...styles.modeBtn,
+                background: viewMode === mode ? "#0a3a75" : "#eee",
+                color: viewMode === mode ? "white" : "black",
+              }}
+            >
+              {mode === "he" && "עברית"}
+              {mode === "ar" && "ארמית"}
+              {mode === "both" && "משולב"}
+              {mode === "sources" && "דפי מקורות"}
+            </button>
+          ))}
       </div>
 
       {/* אזור תוכן */}
@@ -130,23 +132,6 @@ export default function LessonView({ item, type }) {
           )}
         </div>
       )}
-
-      {/* דפי מקורות – במקום הטקסט */}
-      {/* {viewMode === "sources" && item?.sources?.length > 0 && (
-        <div style={styles.sourcesWrapper}>
-          {item.sources
-            .sort((a, b) => a.order - b.order)
-            .map((page, i) => (
-              <img
-                key={i}
-                src={page.imageUrl}
-                alt={`דף מקורות ${i + 1}`}
-                style={styles.sourcePage}
-                loading="lazy"
-              />
-            ))}
-        </div>
-      )} */}
 
       {/* דפי מקורות – במקום הטקסט */}
       {viewMode === "sources" && (

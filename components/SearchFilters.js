@@ -8,6 +8,7 @@ export default function SearchFilters({ lessons, onResults }) {
 
   const hasLessons = Array.isArray(lessons) && lessons.length > 0;
 
+  // ניקוי מחרוזות
   const clean = (v) =>
     String(v || "")
       .trim()
@@ -74,16 +75,49 @@ export default function SearchFilters({ lessons, onResults }) {
   ];
 
   // -------------------------
-  // רשימת פרשות — ממויינת לפי הסדר האמיתי
+  // המרת דף עברי → מספר (כל גודל)
+  // -------------------------
+  const HEBREW_VALUES = {
+    א: 1,
+    ב: 2,
+    ג: 3,
+    ד: 4,
+    ה: 5,
+    ו: 6,
+    ז: 7,
+    ח: 8,
+    ט: 9,
+    י: 10,
+    כ: 20,
+    ל: 30,
+    מ: 40,
+    נ: 50,
+    ס: 60,
+    ע: 70,
+    פ: 80,
+    צ: 90,
+    ק: 100,
+    ר: 200,
+    ש: 300,
+    ת: 400,
+  };
+
+  const dafToIndex = (str) =>
+    clean(str)
+      .split("")
+      .reduce((sum, ch) => sum + (HEBREW_VALUES[ch] || 0), 0);
+
+  // -------------------------
+  // רשימת פרשות — לפי סדר
   // -------------------------
   const parashiot = hasLessons
     ? Array.from(new Set(lessons.map((l) => clean(l.parasha))))
-        .filter((p) => PARASHA_ORDER.includes(p)) // נקה שגיאות כתיב
+        .filter((p) => PARASHA_ORDER.includes(p))
         .sort((a, b) => PARASHA_ORDER.indexOf(a) - PARASHA_ORDER.indexOf(b))
     : [];
 
   // -------------------------
-  // דפים — ממיינים מספרית
+  // דפים — מיון עברי מלא
   // -------------------------
   const dafim =
     parasha && hasLessons
@@ -93,11 +127,11 @@ export default function SearchFilters({ lessons, onResults }) {
               .filter((l) => clean(l.parasha) === clean(parasha))
               .map((l) => clean(l.daf))
           )
-        ).sort((a, b) => Number(a) - Number(b))
+        ).sort((a, b) => dafToIndex(a) - dafToIndex(b))
       : [];
 
   // -------------------------
-  // סינון + החזרת תוצאות
+  // סינון תוצאות
   // -------------------------
   useEffect(() => {
     if (!hasLessons) return;
@@ -108,11 +142,6 @@ export default function SearchFilters({ lessons, onResults }) {
       filtered = filtered.filter((l) => clean(l.parasha) === clean(parasha));
 
     if (daf) filtered = filtered.filter((l) => clean(l.daf) === clean(daf));
-
-    // מיון לפי pageid לשמירה על סדר תקין
-    filtered = [...filtered].sort(
-      (a, b) => (Number(b.pageid) || 0) - (Number(a.pageid) || 0)
-    );
 
     onResults(filtered);
   }, [parasha, daf, lessons]);
@@ -160,7 +189,6 @@ const styles = {
     width: "100%",
     display: "flex",
     justifyContent: "center",
-    flexDirection: "row",
     gap: 12,
     marginTop: 20,
     marginBottom: 20,
