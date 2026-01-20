@@ -261,3 +261,4 @@ export async function fetchPshatNav(pageid) {
 
   return res.json();
 }
+// ניווט לשיעור קודם / הבא (פשט)
