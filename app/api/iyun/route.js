@@ -1,6 +1,6 @@
 import { fetchCollection } from "@/utils/wixFetch";
 
-export const revalidate = 100;
+export const revalidate = 3600;
 
 export async function GET() {
   try {
