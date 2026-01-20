@@ -1,6 +1,6 @@
 import { fetchCollection } from "@/utils/wixFetch";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 100;
 
 export async function GET() {
   try {
