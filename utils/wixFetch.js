@@ -201,8 +201,9 @@ export async function fetchCollection(collectionName, options = {}) {
 
   const res = await fetch(endpoint, {
     method: "GET",
-    next: { revalidate: 3600 }, // ✅ לא no-store
+    cache: "no-store", // ❗ הכי חשוב
   });
+  console.log(res.ok);
 
   if (!res.ok) {
     throw new Error(`Wix fetch failed (${res.status}): ${await res.text()}`);

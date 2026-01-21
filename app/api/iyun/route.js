@@ -5,6 +5,7 @@ export const revalidate = 3600;
 export async function GET() {
   try {
     const data = await fetchCollection("Import1"); // קולקשן עיון
+    console.log(data);
 
     const items = Array.isArray(data?.items) ? data.items : [];
 
