@@ -6,18 +6,27 @@ import { useState, useEffect, useRef } from "react";
 const FLOAT_WIDTH_DESKTOP = 420; // 300 * 1.4
 const FLOAT_HEIGHT_DESKTOP = 235; // 168 * 1.4
 const FLOAT_MARGIN = 20;
-const MOBILE_BREAKPOINT = 768;
-
-/* בחישוב גודל החלון הצף במובייל - ברוחב העמוד (עם שוליים קטנים), בפרופורציה 16:9 */
+const MOBILE_BREAKPOINT = 480; // טלפון בלבד - חלונות קטנים בדסקטופ לא נכללים
 const MOBILE_FLOAT_SIDE_MARGIN = 10;
 
+/* חישוב גודל החלון הצף לפי רוחב viewport:
+   - דסקטופ/חלון רחב (≥768): 420×235 בפינה
+   - חלון ביניים (480–767): גודל קטן בפינה, לא רוחב מלא
+   - מובייל (<480): רוחב מלא עם שוליים, מוצמד לתחתית */
 function computeFloatSize(viewportWidth) {
+  if (viewportWidth >= 768) {
+    return {
+      width: FLOAT_WIDTH_DESKTOP,
+      height: FLOAT_HEIGHT_DESKTOP,
+      anchor: "corner",
+    };
+  }
   if (viewportWidth >= MOBILE_BREAKPOINT) {
-    return { width: FLOAT_WIDTH_DESKTOP, height: FLOAT_HEIGHT_DESKTOP };
+    return { width: 280, height: 158, anchor: "corner" };
   }
   const width = Math.max(200, viewportWidth - MOBILE_FLOAT_SIDE_MARGIN * 2);
   const height = Math.round((width * 9) / 16);
-  return { width, height };
+  return { width, height, anchor: "bottom" };
 }
 
 export default function LessonView({ item, type }) {
@@ -34,6 +43,7 @@ export default function LessonView({ item, type }) {
   const [floatSize, setFloatSize] = useState({
     width: FLOAT_WIDTH_DESKTOP,
     height: FLOAT_HEIGHT_DESKTOP,
+    anchor: "corner",
   });
 
   const videoRef = useRef(null);
@@ -82,9 +92,13 @@ export default function LessonView({ item, type }) {
   useEffect(() => {
     const onScroll = () => {
       const scroll = window.scrollY;
-      // הפיכה למצב צף כשגוללים מספיק למטה
-      if (!isFloating && scroll > 0) setIsFloating(true);
-      // חזרה למצב קבוע רק כשהגלילה מגיעה לראש העמוד
+      const pageScrollable =
+        document.documentElement.scrollHeight - window.innerHeight;
+
+      // הפיכה למצב צף - רק אם הדף ארוך מספיק לגלול ממנו חזרה לאפס
+      if (!isFloating && scroll > 350 && pageScrollable >= 400)
+        setIsFloating(true);
+      // חזרה למצב קבוע - תמיד אפשרית, גם בדפים קצרים
       if (isFloating && scroll <= 0) setIsFloating(false);
     };
     window.addEventListener("scroll", onScroll);
@@ -134,13 +148,13 @@ export default function LessonView({ item, type }) {
   };
 
   const onMouseDownVideo = (e) => {
-    if (!isFloating || isMobile) return;
+    if (!isFloating || floatSize.anchor === "bottom") return;
     e.preventDefault();
     handleDragStart(e.clientX, e.clientY);
   };
 
   const onTouchStartVideo = (e) => {
-    if (!isFloating || isMobile) return;
+    if (!isFloating || floatSize.anchor === "bottom") return;
     const t = e.touches[0];
     handleDragStart(t.clientX, t.clientY);
   };
@@ -232,7 +246,7 @@ export default function LessonView({ item, type }) {
           ref={videoRef}
           style={
             isFloating
-              ? isMobile
+              ? floatSize.anchor === "bottom"
                 ? {
                     ...styles.floatingVideoWrapper,
                     width: floatSize.width,
@@ -256,8 +270,8 @@ export default function LessonView({ item, type }) {
               : styles.videoWrapper
           }
         >
-          {/* פס גרירה קטן בראש החלון - רק בדסקטופ; במובייל החלון מוצמד לתחתית בלי גרירה */}
-          {isFloating && !isMobile && (
+          {/* פס גרירה קטן בראש החלון - רק כשמעוגן לפינה (דסקטופ/חלון ביניים); במובייל (anchor=bottom) החלון מוצמד לתחתית בלי גרירה */}
+          {isFloating && floatSize.anchor !== "bottom" && (
             <div
               style={{
                 ...styles.dragHandle,
