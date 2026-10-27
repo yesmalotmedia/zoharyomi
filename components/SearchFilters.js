@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function SearchFilters({ lessons, onResults }) {
   const [parasha, setParasha] = useState("");
   const [daf, setDaf] = useState("");
+
+  // onResults נוצר מחדש בכל רינדור של ההורה - שומרים ב-ref כדי לא להיכנס ללולאה
+  const onResultsRef = useRef(onResults);
+  useEffect(() => {
+    onResultsRef.current = onResults;
+  });
 
   const hasLessons = Array.isArray(lessons) && lessons.length > 0;
 
@@ -143,8 +149,8 @@ export default function SearchFilters({ lessons, onResults }) {
 
     if (daf) filtered = filtered.filter((l) => clean(l.daf) === clean(daf));
 
-    onResults(filtered);
-  }, [parasha, daf, lessons]);
+    onResultsRef.current(filtered);
+  }, [parasha, daf, lessons, hasLessons]);
 
   if (!hasLessons) return null;
 

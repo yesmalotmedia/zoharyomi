@@ -169,7 +169,7 @@ export async function fetchFromWix(collectionName, options = {}) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    next: { revalidate: 3600 }, // ✅ קאש שרת אחיד
+    next: { revalidate: 60 }, // ✅ קאש שרת אחיד
     body: buildBody(options),
   });
 
@@ -201,9 +201,8 @@ export async function fetchCollection(collectionName, options = {}) {
 
   const res = await fetch(endpoint, {
     method: "GET",
-    cache: "no-store", // ❗ הכי חשוב
+    next: { revalidate: 60 }, // ✅ מהיר מהקאש + מתעדכן תוך דקה
   });
-  console.log(res.ok);
 
   if (!res.ok) {
     throw new Error(`Wix fetch failed (${res.status}): ${await res.text()}`);
@@ -221,7 +220,7 @@ export async function fetchItem(collection, id) {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    next: { revalidate: 3600 }, // ✅ קאש לפריט
+    next: { revalidate: 60 }, // ✅ קאש לפריט - מתעדכן תוך דקה
     body: JSON.stringify({ collection, id }),
   });
 

@@ -166,7 +166,10 @@ export default function LessonView({ item, type }) {
     const onMouseUp = () => handleDragEnd();
     const onTouchMove = (e) => {
       const t = e.touches[0];
-      if (t) handleDragMove(t.clientX, t.clientY);
+      if (!t) return;
+      // מונע גלילה של הדף בזמן גרירת הווידאו
+      e.preventDefault();
+      handleDragMove(t.clientX, t.clientY);
     };
     const onTouchEnd = () => handleDragEnd();
 
@@ -181,6 +184,7 @@ export default function LessonView({ item, type }) {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging]);
 
   /* קליק על אזור הגרירה (הפס העליון) - אם לא הייתה גרירה ממשית, לא עושים כלום מיוחד */

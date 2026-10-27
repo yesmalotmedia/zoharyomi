@@ -16,7 +16,7 @@ export default function LessonCard({ type, item }) {
       <div style={styles.card}>
         {/* תמונת תצוגה מקדימה */}
         <div style={styles.thumbnailWrapper}>
-          <img src={thumb} style={styles.thumbnail} />
+          <img src={thumb} alt="" loading="lazy" style={styles.thumbnail} />
 
           {/* אייקון Play */}
           <div style={styles.playIconWrapper}>

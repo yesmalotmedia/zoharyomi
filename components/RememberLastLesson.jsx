@@ -22,7 +22,7 @@ export default function RememberLastLesson({ item, type }) {
         })
       );
     } catch {}
-  }, [item]);
+  }, [item, type]);
 
   return null;
 }

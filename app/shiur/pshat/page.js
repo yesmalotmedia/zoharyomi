@@ -14,27 +14,27 @@ export default function PshatPage() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
+    async function loadInitialFast() {
+      try {
+        setLoadingInitial(true);
+
+        const res = await fetch("/api/pshat");
+        const fullJson = await res.json(); // קריאה אחת ויחידה
+        const items = fullJson.items ?? [];
+
+        // מציג מייד את 10 הראשונים
+        setVisibleLessons(items.slice(0, 10));
+
+        // בשלב שני שומר את הכל
+        setAllLessons(items);
+        setFilteredLessons(items);
+      } finally {
+        setLoadingInitial(false);
+      }
+    }
+
     loadInitialFast();
   }, []);
-
-  async function loadInitialFast() {
-    try {
-      setLoadingInitial(true);
-
-      const res = await fetch("/api/pshat");
-      const fullJson = await res.json(); // קריאה אחת ויחידה
-      const items = fullJson.items ?? [];
-
-      // מציג מייד את 10 הראשונים
-      setVisibleLessons(items.slice(0, 10));
-
-      // בשלב שני שומר את הכל
-      setAllLessons(items);
-      setFilteredLessons(items);
-    } finally {
-      setLoadingInitial(false);
-    }
-  }
 
   function handleFilterResults(results) {
     setFilteredLessons(results);

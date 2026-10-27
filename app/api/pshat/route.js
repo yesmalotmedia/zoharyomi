@@ -1,6 +1,7 @@
 import { fetchCollection } from "@/utils/wixFetch";
 
-export const revalidate = 3600;
+// ISR: התגובה מוגשת מהקאש מיידית, ומתרעננת מ-Wix ברקע לכל היותר פעם בדקה
+export const revalidate = 60;
 
 export async function GET() {
   try {
@@ -15,7 +16,18 @@ export async function GET() {
       return pb - pa;
     });
 
-    return Response.json({ items });
+    // לרשימה שולחים רק את השדות שהכרטיס והסינון צריכים - בלי הטקסט המלא (aramit/hebrew)
+    const listItems = items.map(({ _id, pageid, parasha, daf, page, par, youtube }) => ({
+      _id,
+      pageid,
+      parasha,
+      daf,
+      page,
+      par,
+      youtube,
+    }));
+
+    return Response.json({ items: listItems });
   } catch (err) {
     console.error("❌ ERROR in /api/pshat:", err.message);
     return Response.json({ items: [] });

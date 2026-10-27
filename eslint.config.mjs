@@ -1,25 +1,16 @@
-import { defineConfig } from "eslint/config";
-import nextPlugin from "eslint-plugin-next";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
 
 export default defineConfig([
+  ...nextVitals,
   {
-    files: ["**/*.{js,jsx,ts,tsx}"],
-    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
-
-    languageOptions: {
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: "module",
-        ecmaFeatures: { jsx: true },
-      },
-    },
-
-    plugins: {
-      next: nextPlugin,
-    },
-
     rules: {
-      ...nextPlugin.configs.recommended.rules,
+      "react/no-unescaped-entities": "off",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/set-state-in-effect": "off",
+      "@next/next/no-img-element": "warn",
+      "jsx-a11y/alt-text": "warn",
     },
   },
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
