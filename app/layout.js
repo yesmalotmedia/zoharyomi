@@ -2,6 +2,7 @@ import "./globals.css";
 import { Heebo } from "next/font/google";
 import ConditionalNavbar from "@/components/ConditionalNavbar";
 import { Analytics } from "@vercel/analytics/react"; // 👈 הוספה
+import { SITE_URL, SITE_NAME } from "@/utils/seo";
 
 const heebo = Heebo({
   subsets: ["hebrew"],
@@ -10,8 +11,17 @@ const heebo = Heebo({
 });
 
 export const metadata = {
-  title: "הלימוד היומי בזוהר",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "הלימוד היומי בזוהר",
+    template: `%s | ${SITE_NAME}`,
+  },
   description: "לימוד הזוהר היומי בארץ ובעולם",
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "he_IL",
+  },
 };
 
 export default function RootLayout({ children }) {

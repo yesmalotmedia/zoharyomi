@@ -1,4 +1,4 @@
-function extractThumbnail(item) {
+export function extractThumbnail(item) {
   try {
     if (!item?.youtube?.nodes) return "/placeholder.jpg";
 

@@ -1,13 +1,17 @@
 import LessonView from "@/components/LessonView";
-import { fetchItem } from "@/utils/wixFetch";
+import { getLesson, lessonMetadata, lessonJsonLd } from "@/utils/seo";
 import RememberLastLesson from "@/components/RememberLastLesson";
 import Link from "next/link";
+
+export async function generateMetadata(props) {
+  const { lessonId } = await props.params;
+  return lessonMetadata("pshat", await getLesson("pshat", lessonId));
+}
 
 export default async function LessonPage(props) {
   const { lessonId } = await props.params;
 
-  const data = (await fetchItem("pshat", lessonId)) ?? {};
-  const item = data.item;
+  const item = await getLesson("pshat", lessonId);
 
   if (!item) {
     return (
@@ -42,8 +46,18 @@ export default async function LessonPage(props) {
     );
   }
 
+  const jsonLd = lessonJsonLd("pshat", item);
+
   return (
     <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
       <RememberLastLesson item={item} type={"pshat"} />
       <LessonView item={item} type="pshat" />
     </>
