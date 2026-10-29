@@ -10,8 +10,14 @@ const heebo = Heebo({
   variable: "--font-heebo",
 });
 
+// צבע שורת הכתובת / שורת המצב בטלפון, ובאפליקציה המותקנת
+export const viewport = {
+  themeColor: "#0a3a75",
+};
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
+  appleWebApp: { title: SITE_NAME, statusBarStyle: "default" },
   title: {
     default: "הלימוד היומי בזוהר",
     template: `%s | ${SITE_NAME}`,

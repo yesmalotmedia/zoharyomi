@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import LessonNav from "@/components/LessonNav";
+import ShareButton from "@/components/ShareButton";
 
 /* מימדי החלון הצף בדסקטופ (40% גדול יותר מהגודל המקורי 300x168) */
 const FLOAT_WIDTH_DESKTOP = 420; // 300 * 1.4
@@ -8,6 +10,23 @@ const FLOAT_HEIGHT_DESKTOP = 235; // 168 * 1.4
 const FLOAT_MARGIN = 20;
 const MOBILE_BREAKPOINT = 480; // טלפון בלבד - חלונות קטנים בדסקטופ לא נכללים
 const MOBILE_FLOAT_SIDE_MARGIN = 10;
+
+/* גודל הטקסט - נשמר בדפדפן ומשותף לכל השיעורים */
+const TEXT_SIZE_DEFAULT = 17;
+const TEXT_SIZE_MIN = 13;
+const TEXT_SIZE_MAX = 29;
+const TEXT_SIZE_STEP = 2;
+
+/* המשך צפייה - לא שומרים את תחילת הסרטון או את סופו */
+const RESUME_MIN_SECONDS = 20;
+const RESUME_END_MARGIN = 30;
+const formatTime = (sec) => {
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+};
 
 /* חישוב גודל החלון הצף לפי רוחב viewport:
    - דסקטופ/חלון רחב (≥768): 420×235 בפינה
@@ -56,6 +75,11 @@ export default function LessonView({ item, type }) {
   // לא לוחץ על כפתור ה-play המקורי של יוטיוב (זה שגורם בפועל לניווט/לפתיחת
   // האפליקציה במובייל) - הוא לוחץ רק על האלמנט שלנו.
   const [playing, setPlaying] = useState(false);
+
+  const [textSize, setTextSize] = useState(TEXT_SIZE_DEFAULT);
+  // מהיכן להתחיל את הסרטון (המקום שבו המשתמש עצר בפעם הקודמת)
+  const [resumeAt, setResumeAt] = useState(0);
+  const iframeRef = useRef(null);
 
   /* ------------------------ בדיקת מובייל + גודל החלון הצף ------------------------ */
   useEffect(() => {
@@ -204,45 +228,123 @@ export default function LessonView({ item, type }) {
     }
   }
 
-  function buildEmbedUrl(id) {
+  function buildEmbedUrl(id, start) {
     if (!id) return "";
     const params = new URLSearchParams({
       rel: "0",
       playsinline: "1", // לא לפתוח נגן מסך-מלא של המכשיר ב-iOS
       autoplay: "1", // טוענים את ה-iframe רק לאחר לחיצה על כפתור ה-play שלנו, אז מתחילים ישר בנגינה
+      enablejsapi: "1", // כדי לקבל מהנגן את הזמן הנוכחי (המשך צפייה)
     });
+    if (typeof window !== "undefined") params.set("origin", window.location.origin);
+    if (start) params.set("start", String(Math.floor(start)));
     return `https://www.youtube.com/embed/${id}?${params.toString()}`;
   }
 
   const videoNode = item?.youtube?.nodes?.find((n) => n.type === "VIDEO");
   const videoUrl = videoNode?.videoData?.video?.src?.url ?? "";
   const videoId = extractYoutubeId(videoUrl);
-  const embedUrl = buildEmbedUrl(videoId);
   const thumbnailUrl = videoId
     ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
     : "";
+  const positionKey = `videoPos:${videoId}`;
+  const embedUrl = buildEmbedUrl(videoId, resumeAt);
+
+  /* ------------------------ גודל טקסט ------------------------ */
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem("textSize"));
+      if (saved >= TEXT_SIZE_MIN && saved <= TEXT_SIZE_MAX) setTextSize(saved);
+    } catch {}
+  }, []);
+
+  const changeTextSize = (delta) => {
+    setTextSize((prev) => {
+      const size = Math.min(TEXT_SIZE_MAX, Math.max(TEXT_SIZE_MIN, prev + delta));
+      try {
+        localStorage.setItem("textSize", String(size));
+      } catch {}
+      return size;
+    });
+  };
+
+  /* ------------------------ המשך צפייה מאותה נקודה ------------------------ */
+  useEffect(() => {
+    if (!videoId) return;
+    try {
+      const saved = Number(localStorage.getItem(positionKey));
+      setResumeAt(saved >= RESUME_MIN_SECONDS ? saved : 0);
+    } catch {}
+  }, [videoId, positionKey]);
+
+  // נגן היוטיוב שולח את הזמן הנוכחי ב-postMessage (אחרי שנרשמים אליו ב-"listening")
+  useEffect(() => {
+    if (!playing || !videoId) return;
+    let lastSaved = 0;
+    let duration = 0;
+
+    const onMessage = (e) => {
+      if (!/^https:\/\/(www\.)?youtube(-nocookie)?\.com$/.test(e.origin)) return;
+      if (e.source !== iframeRef.current?.contentWindow) return;
+      let data;
+      try {
+        data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+      } catch {
+        return;
+      }
+      const info = data?.event === "infoDelivery" ? data.info : null;
+      if (!info) return;
+      if (typeof info.duration === "number") duration = info.duration;
+
+      try {
+        // סוף הסרטון - אין מה להמשיך בפעם הבאה
+        if (info.playerState === 0) {
+          localStorage.removeItem(positionKey);
+          return;
+        }
+        const t = info.currentTime;
+        if (typeof t !== "number" || Math.abs(t - lastSaved) < 5) return;
+        lastSaved = t;
+
+        if (t < RESUME_MIN_SECONDS || (duration && t > duration - RESUME_END_MARGIN))
+          localStorage.removeItem(positionKey);
+        else localStorage.setItem(positionKey, String(Math.floor(t)));
+      } catch {}
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [playing, videoId, positionKey]);
+
+  const listenToPlayer = () => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
+      "*",
+    );
+  };
+
+  const startFromBeginning = () => {
+    try {
+      localStorage.removeItem(positionKey);
+    } catch {}
+    setResumeAt(0);
+    setPlaying(true);
+  };
 
   /* ------------------------ רנדור ------------------------ */
   return (
     <div style={styles.container}>
       {/* פרטי השיעור */}
-      <div style={styles.details}>
-        פרשת {item.parasha} • דף {item.daf} עמוד {item.page}
-        {item.par && <> • פסקה {item.par}</>}
+      <div style={styles.detailsRow}>
+        <div style={styles.details}>
+          פרשת {item.parasha} • דף {item.daf} עמוד {item.page}
+          {item.par && <> • פסקה {item.par}</>}
+        </div>
+        <ShareButton />
       </div>
 
       {/* ניווט */}
-      <div style={styles.navWrapper}>
-        <a href={`/shiur/${type}/${item.pageid - 1}`} style={styles.navButton}>
-          → שיעור קודם
-        </a>
-        <a
-          href={`/shiur/${type}/${item.pageid + 1}`}
-          style={{ ...styles.navButton, ...styles.nextButton }}
-        >
-          שיעור הבא ←
-        </a>
-      </div>
+      <LessonNav type={type} pageid={item.pageid} />
 
       {/* וידאו */}
       {videoUrl && (
@@ -293,6 +395,8 @@ export default function LessonView({ item, type }) {
           )}
           {playing ? (
             <iframe
+              ref={iframeRef}
+              onLoad={listenToPlayer}
               style={styles.video}
               src={embedUrl}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -319,9 +423,20 @@ export default function LessonView({ item, type }) {
               <span style={styles.playIconCircle}>
                 <span style={styles.playIconTriangle} />
               </span>
+              {resumeAt > 0 && (
+                <span style={styles.resumeBadge}>
+                  ממשיכים מ-{formatTime(resumeAt)}
+                </span>
+              )}
             </button>
           )}
         </div>
+      )}
+
+      {videoUrl && !playing && resumeAt > 0 && (
+        <button type="button" onClick={startFromBeginning} style={styles.restartBtn}>
+          ↺ להתחיל את הסרטון מההתחלה
+        </button>
       )}
 
       {/* כפתורי מצבים */}
@@ -346,6 +461,31 @@ export default function LessonView({ item, type }) {
           ))}
       </div>
 
+      {/* גודל טקסט */}
+      {viewMode !== "sources" && (
+        <div style={styles.textSizeRow}>
+          <span>גודל טקסט:</span>
+          <button
+            type="button"
+            onClick={() => changeTextSize(-TEXT_SIZE_STEP)}
+            disabled={textSize <= TEXT_SIZE_MIN}
+            style={styles.textSizeBtn}
+            aria-label="הקטנת הטקסט"
+          >
+            א−
+          </button>
+          <button
+            type="button"
+            onClick={() => changeTextSize(TEXT_SIZE_STEP)}
+            disabled={textSize >= TEXT_SIZE_MAX}
+            style={{ ...styles.textSizeBtn, fontSize: 19 }}
+            aria-label="הגדלת הטקסט"
+          >
+            א+
+          </button>
+        </div>
+      )}
+
       {/* אזור תוכן */}
       {viewMode !== "sources" && (
         <div
@@ -358,14 +498,14 @@ export default function LessonView({ item, type }) {
           {(viewMode === "he" || viewMode === "both") && (
             <div style={styles.column}>
               <h3 style={styles.sectionTitle}>עברית</h3>
-              <p style={styles.text}>{item.hebrew}</p>
+              <p style={{ ...styles.text, fontSize: textSize }}>{item.hebrew}</p>
             </div>
           )}
 
           {(viewMode === "ar" || viewMode === "both") && (
             <div style={styles.column}>
               <h3 style={styles.sectionTitle}>ארמית</h3>
-              <p style={styles.text}>{item.aramit}</p>
+              <p style={{ ...styles.text, fontSize: textSize }}>{item.aramit}</p>
             </div>
           )}
         </div>
@@ -403,9 +543,17 @@ const styles = {
     marginBottom: 200,
   },
 
+  detailsRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 30,
+    flexWrap: "wrap",
+  },
+
   details: {
     fontSize: 20,
-    marginBottom: 30,
     fontWeight: 600,
     color: "#0a3a75",
   },
@@ -542,30 +690,47 @@ const styles = {
     fontSize: 17,
   },
 
-  navWrapper: {
-    display: "flex",
-    gap: 12,
-    marginBottom: 30,
-    flexWrap: "wrap",
+  resumeBadge: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    background: "rgba(0,0,0,0.7)",
+    color: "white",
+    fontSize: 14,
+    padding: "4px 10px",
+    borderRadius: 6,
   },
 
-  navButton: {
-    flex: 1,
-    textAlign: "center",
-    padding: "12px 16px",
-    borderRadius: 12,
+  restartBtn: {
+    display: "block",
+    margin: "-10px 0 20px",
+    background: "none",
+    border: "none",
+    color: "#1b73c0",
+    fontSize: 14,
+    cursor: "pointer",
+    padding: 0,
+  },
+
+  textSizeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+    color: "#555",
+    fontSize: 15,
+  },
+
+  textSizeBtn: {
+    minWidth: 44,
+    height: 36,
+    borderRadius: 8,
+    border: "1px solid #d0d8e8",
     background: "#f0f4fa",
     color: "#0a3a75",
-    fontSize: 16,
-    fontWeight: 600,
-    textDecoration: "none",
-    border: "1px solid #d0d8e8",
-  },
-
-  nextButton: {
-    background: "#0a3a75",
-    color: "white",
-    border: "1px solid #0a3a75",
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: "pointer",
   },
 
   /* דפי מקורות */
