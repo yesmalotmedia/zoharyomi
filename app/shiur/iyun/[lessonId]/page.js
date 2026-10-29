@@ -58,7 +58,8 @@ export default async function LessonPage(props) {
         />
       )}
       <RememberLastLesson item={item} type={"iyun"} />
-      <LessonView item={item} type="iyun" />
+      {/* key - במעבר בין שיעורים מתחילים נקי (סרטון לא מנגן, לא צף) */}
+      <LessonView key={item.pageid} item={item} type="iyun" />
     </>
   );
 }

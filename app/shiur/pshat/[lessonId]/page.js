@@ -59,7 +59,8 @@ export default async function LessonPage(props) {
         />
       )}
       <RememberLastLesson item={item} type={"pshat"} />
-      <LessonView item={item} type="pshat" />
+      {/* key - במעבר בין שיעורים מתחילים נקי (סרטון לא מנגן, לא צף) */}
+      <LessonView key={item.pageid} item={item} type="pshat" />
     </>
   );
 }
