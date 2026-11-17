@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import LessonNav from "@/components/LessonNav";
 import ShareButton from "@/components/ShareButton";
+import SourceSheet from "@/components/SourceSheet";
 
 /* מימדי החלון הצף בדסקטופ (40% גדול יותר מהגודל המקורי 300x168) */
 const FLOAT_WIDTH_DESKTOP = 420; // 300 * 1.4
@@ -48,7 +49,7 @@ function computeFloatSize(viewportWidth) {
   return { width, height, anchor: "bottom" };
 }
 
-export default function LessonView({ item, type }) {
+export default function LessonView({ item, type, sheet }) {
   const [isMobile, setIsMobile] = useState(false);
   const [viewMode, setViewMode] = useState("both");
   const [isFloating, setIsFloating] = useState(false);
@@ -323,6 +324,18 @@ export default function LessonView({ item, type }) {
     );
   };
 
+  /* קפיצה לרגע מסוים בסרטון (מדף המקורות) */
+  const seekTo = (sec) => {
+    const player = iframeRef.current?.contentWindow;
+    if (playing && player) {
+      player.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [sec, true] }), "*");
+      player.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+    } else {
+      setResumeAt(sec);
+      setPlaying(true);
+    }
+  };
+
   const startFromBeginning = () => {
     try {
       localStorage.removeItem(positionKey);
@@ -528,6 +541,8 @@ export default function LessonView({ item, type }) {
           />
         </div>
       )}
+
+      {sheet && <SourceSheet sheet={sheet} onSeek={seekTo} />}
     </div>
   );
 }
