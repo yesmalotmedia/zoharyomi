@@ -22,5 +22,5 @@ export default async function SharedSheetPage(props) {
   const item = shared && (await getLesson(shared.type, shared.lessonId));
   if (!item) notFound();
 
-  return <LessonView key={item.pageid} item={item} type={shared.type} sheet={shared.sheet} />;
+  return <LessonView key={item.pageid} item={item} type={shared.type} sheet={shared.sheet} study={shared.study} />;
 }
