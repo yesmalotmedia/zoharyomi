@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import LessonNav from "@/components/LessonNav";
 import ShareButton from "@/components/ShareButton";
 import SourceSheet from "@/components/SourceSheet";
+import StudyView from "@/components/StudyView";
 
 /* מימדי החלון הצף בדסקטופ (40% גדול יותר מהגודל המקורי 300x168) */
 const FLOAT_WIDTH_DESKTOP = 420; // 300 * 1.4
@@ -49,9 +50,10 @@ function computeFloatSize(viewportWidth) {
   return { width, height, anchor: "bottom" };
 }
 
-export default function LessonView({ item, type, sheet }) {
+export default function LessonView({ item, type, sheet, study }) {
   const [isMobile, setIsMobile] = useState(false);
-  const [viewMode, setViewMode] = useState("both");
+  // דף עם "לימוד עם הרב" נפתח ישר בתצוגה הזו
+  const [viewMode, setViewMode] = useState(study ? "study" : "both");
   const [isFloating, setIsFloating] = useState(false);
 
   // מיקום החלון הצף - נשמר בין הצפות (ברירת מחדל: פינה ימנית תחתונה)
@@ -81,6 +83,8 @@ export default function LessonView({ item, type, sheet }) {
   // מהיכן להתחיל את הסרטון (המקום שבו המשתמש עצר בפעם הקודמת)
   const [resumeAt, setResumeAt] = useState(0);
   const iframeRef = useRef(null);
+  // הזמן הנוכחי בסרטון (מהנגן) - לסנכרון "לימוד עם הרב"
+  const [now, setNow] = useState(0);
 
   /* ------------------------ בדיקת מובייל + גודל החלון הצף ------------------------ */
   useEffect(() => {
@@ -115,6 +119,10 @@ export default function LessonView({ item, type, sheet }) {
 
   /* ------------------------ וידאו צף ------------------------ */
   useEffect(() => {
+    if (viewMode === "study") {
+      setIsFloating(false);
+      return;
+    }
     const onScroll = () => {
       const scroll = window.scrollY;
       const pageScrollable =
@@ -128,7 +136,7 @@ export default function LessonView({ item, type, sheet }) {
     };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, [isFloating]);
+  }, [isFloating, viewMode]);
 
   /* ------------------------ גרירת החלון הצף ------------------------ */
   const clampPos = (left, top) => {
@@ -296,6 +304,8 @@ export default function LessonView({ item, type, sheet }) {
       const info = data?.event === "infoDelivery" ? data.info : null;
       if (!info) return;
       if (typeof info.duration === "number") duration = info.duration;
+      if (typeof info.currentTime === "number")
+        setNow((prev) => (Math.abs(prev - info.currentTime) >= 0.3 ? info.currentTime : prev));
 
       try {
         // סוף הסרטון - אין מה להמשיך בפעם הבאה
@@ -326,6 +336,7 @@ export default function LessonView({ item, type, sheet }) {
 
   /* קפיצה לרגע מסוים בסרטון (מדף המקורות) */
   const seekTo = (sec) => {
+    setNow(sec);
     const player = iframeRef.current?.contentWindow;
     if (playing && player) {
       player.postMessage(JSON.stringify({ event: "command", func: "seekTo", args: [sec, true] }), "*");
@@ -334,6 +345,12 @@ export default function LessonView({ item, type, sheet }) {
       setResumeAt(sec);
       setPlaying(true);
     }
+  };
+
+  /* מעבר אל/מ"לימוד עם הרב" מזיז את הסרטון במסך (נטען מחדש) - ממשיכים מאותה נקודה */
+  const switchMode = (mode) => {
+    if (playing && (mode === "study") !== (viewMode === "study")) setResumeAt(Math.floor(now));
+    setViewMode(mode);
   };
 
   const startFromBeginning = () => {
@@ -345,8 +362,96 @@ export default function LessonView({ item, type, sheet }) {
   };
 
   /* ------------------------ רנדור ------------------------ */
+  const isStudy = viewMode === "study" && study;
+  const videoBlock = videoUrl && (
+      <div
+        ref={videoRef}
+        style={
+          isFloating
+            ? floatSize.anchor === "bottom"
+              ? {
+                  ...styles.floatingVideoWrapper,
+                  width: floatSize.width,
+                  height: floatSize.height,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  bottom: 12,
+                  top: "auto",
+                  right: "auto",
+                }
+              : {
+                  ...styles.floatingVideoWrapper,
+                  width: floatSize.width,
+                  height: floatSize.height,
+                  left: floatPos?.left ?? "auto",
+                  top: floatPos?.top ?? "auto",
+                  right: floatPos ? "auto" : 20,
+                  bottom: floatPos ? "auto" : 20,
+                  cursor: isDragging ? "grabbing" : "grab",
+                }
+            : styles.videoWrapper
+        }
+      >
+        {/* פס גרירה קטן בראש החלון - רק כשמעוגן לפינה (דסקטופ/חלון ביניים); במובייל (anchor=bottom) החלון מוצמד לתחתית בלי גרירה */}
+        {isFloating && floatSize.anchor !== "bottom" && (
+          <div
+            style={{
+              ...styles.dragHandle,
+              cursor: isDragging ? "grabbing" : "grab",
+            }}
+            onMouseDown={onMouseDownVideo}
+            onTouchStart={onTouchStartVideo}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleHandleClick();
+            }}
+          >
+            <span style={styles.dragHandleGrip}>⠿</span>
+          </div>
+        )}
+        {playing ? (
+          <iframe
+            ref={iframeRef}
+            onLoad={listenToPlayer}
+            style={styles.video}
+            src={embedUrl}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            // sandbox חוסם באופן מוחלט (ע"י הדפדפן) גם ניווט של כל העמוד וגם
+            // פתיחת חלון/טאב חדש מתוך ה-iframe (זה מה שקרה במסך ה"השהיה" -
+            // הקישורים ל"סרטונים מומלצים"/"צפה ביוטיוב" ניסו לפתוח טאב חדש).
+            // play/pause/seek רגילים לא צריכים את ההרשאות האלה כלל.
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+          />
+        ) : (
+          /* תמונת תצוגה וכפתור play משלנו, במקום הנגן המקורי של יוטיוב -
+             כך שהמשתמש לעולם לא לוחץ בפועל על כפתור ה-play המקורי, וזה
+             מבטל את הניווט/פתיחת האפליקציה שקרתה בלחיצה עליו במובייל */
+          <button
+            type="button"
+            onClick={() => setPlaying(true)}
+            style={styles.posterButton}
+            aria-label="הפעל את הסרטון"
+          >
+            {thumbnailUrl && (
+              <img src={thumbnailUrl} alt="" style={styles.posterImage} />
+            )}
+            <span style={styles.playIconCircle}>
+              <span style={styles.playIconTriangle} />
+            </span>
+            {resumeAt > 0 && (
+              <span style={styles.resumeBadge}>
+                ממשיכים מ-{formatTime(resumeAt)}
+              </span>
+            )}
+          </button>
+        )}
+      </div>
+
+  );
+
   return (
-    <div style={styles.container}>
+    <div style={{ ...styles.container, ...(isStudy ? styles.containerWide : null) }}>
       {/* פרטי השיעור */}
       <div style={styles.detailsRow}>
         <div style={styles.details}>
@@ -360,93 +465,9 @@ export default function LessonView({ item, type, sheet }) {
       <LessonNav type={type} pageid={item.pageid} />
 
       {/* וידאו */}
-      {videoUrl && (
-        <div
-          ref={videoRef}
-          style={
-            isFloating
-              ? floatSize.anchor === "bottom"
-                ? {
-                    ...styles.floatingVideoWrapper,
-                    width: floatSize.width,
-                    height: floatSize.height,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    bottom: 12,
-                    top: "auto",
-                    right: "auto",
-                  }
-                : {
-                    ...styles.floatingVideoWrapper,
-                    width: floatSize.width,
-                    height: floatSize.height,
-                    left: floatPos?.left ?? "auto",
-                    top: floatPos?.top ?? "auto",
-                    right: floatPos ? "auto" : 20,
-                    bottom: floatPos ? "auto" : 20,
-                    cursor: isDragging ? "grabbing" : "grab",
-                  }
-              : styles.videoWrapper
-          }
-        >
-          {/* פס גרירה קטן בראש החלון - רק כשמעוגן לפינה (דסקטופ/חלון ביניים); במובייל (anchor=bottom) החלון מוצמד לתחתית בלי גרירה */}
-          {isFloating && floatSize.anchor !== "bottom" && (
-            <div
-              style={{
-                ...styles.dragHandle,
-                cursor: isDragging ? "grabbing" : "grab",
-              }}
-              onMouseDown={onMouseDownVideo}
-              onTouchStart={onTouchStartVideo}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleHandleClick();
-              }}
-            >
-              <span style={styles.dragHandleGrip}>⠿</span>
-            </div>
-          )}
-          {playing ? (
-            <iframe
-              ref={iframeRef}
-              onLoad={listenToPlayer}
-              style={styles.video}
-              src={embedUrl}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              // sandbox חוסם באופן מוחלט (ע"י הדפדפן) גם ניווט של כל העמוד וגם
-              // פתיחת חלון/טאב חדש מתוך ה-iframe (זה מה שקרה במסך ה"השהיה" -
-              // הקישורים ל"סרטונים מומלצים"/"צפה ביוטיוב" ניסו לפתוח טאב חדש).
-              // play/pause/seek רגילים לא צריכים את ההרשאות האלה כלל.
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-            />
-          ) : (
-            /* תמונת תצוגה וכפתור play משלנו, במקום הנגן המקורי של יוטיוב -
-               כך שהמשתמש לעולם לא לוחץ בפועל על כפתור ה-play המקורי, וזה
-               מבטל את הניווט/פתיחת האפליקציה שקרתה בלחיצה עליו במובייל */
-            <button
-              type="button"
-              onClick={() => setPlaying(true)}
-              style={styles.posterButton}
-              aria-label="הפעל את הסרטון"
-            >
-              {thumbnailUrl && (
-                <img src={thumbnailUrl} alt="" style={styles.posterImage} />
-              )}
-              <span style={styles.playIconCircle}>
-                <span style={styles.playIconTriangle} />
-              </span>
-              {resumeAt > 0 && (
-                <span style={styles.resumeBadge}>
-                  ממשיכים מ-{formatTime(resumeAt)}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
-      )}
+      {!isStudy && videoBlock}
 
-      {videoUrl && !playing && resumeAt > 0 && (
+      {videoUrl && !playing && resumeAt > 0 && !isStudy && (
         <button type="button" onClick={startFromBeginning} style={styles.restartBtn}>
           ↺ להתחיל את הסרטון מההתחלה
         </button>
@@ -454,18 +475,19 @@ export default function LessonView({ item, type, sheet }) {
 
       {/* כפתורי מצבים */}
       <div style={styles.modeButtons}>
-        {["he", "ar", "both", "sources"]
+        {[...(study ? ["study"] : []), "he", "ar", "both", "sources"]
           .filter((mode) => mode !== "sources" || type == "iyun")
           .map((mode) => (
             <button
               key={mode}
-              onClick={() => setViewMode(mode)}
+              onClick={() => switchMode(mode)}
               style={{
                 ...styles.modeBtn,
                 background: viewMode === mode ? "#0a3a75" : "#eee",
                 color: viewMode === mode ? "white" : "black",
               }}
             >
+              {mode === "study" && "לימוד עם הרב"}
               {mode === "he" && "עברית"}
               {mode === "ar" && "ארמית"}
               {mode === "both" && "משולב"}
@@ -499,8 +521,21 @@ export default function LessonView({ item, type, sheet }) {
         </div>
       )}
 
+      {/* לימוד עם הרב - הזוהר עם סמן, והמקורות לצידו */}
+      {isStudy && (
+        <StudyView
+          passage={study}
+          sheet={sheet}
+          now={now}
+          playing={playing}
+          onSeek={seekTo}
+          video={videoBlock}
+          textSize={textSize}
+        />
+      )}
+
       {/* אזור תוכן */}
-      {viewMode !== "sources" && (
+      {viewMode !== "sources" && !isStudy && (
         <div
           style={{
             ...styles.columnsWrapper,
@@ -542,7 +577,7 @@ export default function LessonView({ item, type, sheet }) {
         </div>
       )}
 
-      {sheet && <SourceSheet sheet={sheet} onSeek={seekTo} />}
+      {sheet && !isStudy && <SourceSheet sheet={sheet} onSeek={seekTo} />}
     </div>
   );
 }
@@ -556,6 +591,10 @@ const styles = {
     margin: "0 auto",
     fontFamily: "sans-serif",
     marginBottom: 200,
+  },
+
+  containerWide: {
+    maxWidth: 1240,
   },
 
   detailsRow: {
