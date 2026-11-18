@@ -9,10 +9,13 @@ import iyun32 from "./iyun-32.json";
 import iyun32Passage from "./iyun-32.passage.json";
 import iyun925 from "./iyun-925.json";
 import iyun925Passage from "./iyun-925.passage.json";
+import iyun926 from "./iyun-926.json";
+import iyun926Passage from "./iyun-926.passage.json";
 
 const SHEETS = {
   prsvnIJSjucKxmqn: { type: "iyun", lessonId: "32", sheet: iyun32, study: iyun32Passage },
   rA11lld0wyHaqTnL: { type: "iyun", lessonId: "925", sheet: iyun925, study: iyun925Passage },
+  u5w9oRL1nxPhKy1Q: { type: "iyun", lessonId: "926", sheet: iyun926, study: iyun926Passage },
 };
 
 export function getSharedSheet(token) {
