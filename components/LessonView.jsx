@@ -5,6 +5,7 @@ import LessonNav from "@/components/LessonNav";
 import ShareButton from "@/components/ShareButton";
 import SourceSheet from "@/components/SourceSheet";
 import StudyView from "@/components/StudyView";
+import EnglishView, { Captions } from "@/components/EnglishView";
 
 /* מימדי החלון הצף בדסקטופ (40% גדול יותר מהגודל המקורי 300x168) */
 const FLOAT_WIDTH_DESKTOP = 420; // 300 * 1.4
@@ -50,10 +51,10 @@ function computeFloatSize(viewportWidth) {
   return { width, height, anchor: "bottom" };
 }
 
-export default function LessonView({ item, type, sheet, study }) {
+export default function LessonView({ item, type, sheet, study, english, startMode }) {
   const [isMobile, setIsMobile] = useState(false);
   // דף עם "לימוד עם הרב" נפתח ישר בתצוגה הזו
-  const [viewMode, setViewMode] = useState(study ? "study" : "both");
+  const [viewMode, setViewMode] = useState(startMode ?? (study ? "study" : "both"));
   const [isFloating, setIsFloating] = useState(false);
 
   // מיקום החלון הצף - נשמר בין הצפות (ברירת מחדל: פינה ימנית תחתונה)
@@ -85,6 +86,7 @@ export default function LessonView({ item, type, sheet, study }) {
   const iframeRef = useRef(null);
   // הזמן הנוכחי בסרטון (מהנגן) - לסנכרון "לימוד עם הרב"
   const [now, setNow] = useState(0);
+  const [playerStarted, setPlayerStarted] = useState(false);
 
   /* ------------------------ בדיקת מובייל + גודל החלון הצף ------------------------ */
   useEffect(() => {
@@ -303,6 +305,7 @@ export default function LessonView({ item, type, sheet, study }) {
       }
       const info = data?.event === "infoDelivery" ? data.info : null;
       if (!info) return;
+      if (info.playerState === 1) setPlayerStarted(true);
       if (typeof info.duration === "number") duration = info.duration;
       if (typeof info.currentTime === "number")
         setNow((prev) => (Math.abs(prev - info.currentTime) >= 0.3 ? info.currentTime : prev));
@@ -328,11 +331,27 @@ export default function LessonView({ item, type, sheet, study }) {
   }, [playing, videoId, positionKey]);
 
   const listenToPlayer = () => {
+    setPlayerStarted(false); // נגן חדש נטען
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
       "*",
     );
   };
+
+  /* באנגלית הכתוביות שלנו על הסרטון - מכבים את כתוביות יוטיוב כדי שלא יסתירו זו את זו.
+     יוטיוב טוען את הכתוביות שלו רק אחרי תחילת הנגינה, ולכן ממתינים לה ומבקשים שוב אחרי רגע */
+  const hideYoutubeCaptions = viewMode === "en" && english && playerStarted;
+  useEffect(() => {
+    if (!hideYoutubeCaptions) return;
+    const hide = () =>
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: "command", func: "unloadModule", args: ["captions"] }),
+        "*",
+      );
+    hide();
+    const timers = [1000, 3000].map((ms) => setTimeout(hide, ms));
+    return () => timers.forEach(clearTimeout);
+  }, [hideYoutubeCaptions]);
 
   /* קפיצה לרגע מסוים בסרטון (מדף המקורות) */
   const seekTo = (sec) => {
@@ -363,6 +382,7 @@ export default function LessonView({ item, type, sheet, study }) {
 
   /* ------------------------ רנדור ------------------------ */
   const isStudy = viewMode === "study" && study;
+  const isEnglish = viewMode === "en" && english;
   const videoBlock = videoUrl && (
       <div
         ref={videoRef}
@@ -446,6 +466,7 @@ export default function LessonView({ item, type, sheet, study }) {
             )}
           </button>
         )}
+        {isEnglish && playing && <Captions cues={english.cues} now={now} />}
       </div>
 
   );
@@ -475,7 +496,7 @@ export default function LessonView({ item, type, sheet, study }) {
 
       {/* כפתורי מצבים */}
       <div style={styles.modeButtons}>
-        {[...(study ? ["study"] : []), "he", "ar", "both", "sources"]
+        {[...(study ? ["study"] : []), "he", "ar", "both", "sources", ...(english ? ["en"] : [])]
           .filter((mode) => mode !== "sources" || type == "iyun")
           .map((mode) => (
             <button
@@ -492,6 +513,7 @@ export default function LessonView({ item, type, sheet, study }) {
               {mode === "ar" && "ארמית"}
               {mode === "both" && "משולב"}
               {mode === "sources" && "דפי מקורות"}
+              {mode === "en" && "English"}
             </button>
           ))}
       </div>
@@ -534,8 +556,13 @@ export default function LessonView({ item, type, sheet, study }) {
         />
       )}
 
+      {/* השיעור באנגלית */}
+      {isEnglish && (
+        <EnglishView data={english} now={now} playing={playing} onSeek={seekTo} textSize={textSize} />
+      )}
+
       {/* אזור תוכן */}
-      {viewMode !== "sources" && !isStudy && (
+      {viewMode !== "sources" && !isStudy && !isEnglish && (
         <div
           style={{
             ...styles.columnsWrapper,
@@ -577,7 +604,7 @@ export default function LessonView({ item, type, sheet, study }) {
         </div>
       )}
 
-      {sheet && !isStudy && <SourceSheet sheet={sheet} onSeek={seekTo} />}
+      {sheet && !isStudy && !isEnglish && <SourceSheet sheet={sheet} onSeek={seekTo} />}
     </div>
   );
 }
