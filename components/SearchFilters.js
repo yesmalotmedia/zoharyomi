@@ -149,6 +149,13 @@ export default function SearchFilters({ lessons, onResults }) {
 
     if (daf) filtered = filtered.filter((l) => clean(l.daf) === clean(daf));
 
+    // בלי סינון: החדש למעלה. עם פרשה: לפי סדר הלימוד, מתחילת הפרשה -
+    // אחרת רואים רק את 10 האחרונים ונראה כאילו הפרשה מתחילה באמצע
+    const dir = parasha ? 1 : -1;
+    filtered = [...filtered].sort(
+      (a, b) => dir * (Number(a.pageid) - Number(b.pageid)),
+    );
+
     onResultsRef.current(filtered);
   }, [parasha, daf, lessons, hasLessons]);
 

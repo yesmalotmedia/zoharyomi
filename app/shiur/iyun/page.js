@@ -35,14 +35,11 @@ export default function IyunPage() {
     load();
   }, []);
 
+  // הסדר נקבע ב-SearchFilters (החדש למעלה, או מתחילת הפרשה כשנבחרה פרשה)
   function handleFilterResults(results) {
-    const sorted = [...results].sort(
-      (a, b) => Number(b.pageid) - Number(a.pageid),
-    );
-
-    setFilteredLessons(sorted);
+    setFilteredLessons(results);
     setCount(10);
-    setVisibleLessons(sorted.slice(0, 10));
+    setVisibleLessons(results.slice(0, 10));
   }
 
   function loadMore() {
