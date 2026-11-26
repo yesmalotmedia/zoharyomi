@@ -2,16 +2,22 @@ import LessonView from "@/components/LessonView";
 import { getLesson, lessonMetadata, lessonJsonLd } from "@/utils/seo";
 import RememberLastLesson from "@/components/RememberLastLesson";
 import Link from "next/link";
+import { getLessonExtras } from "@/utils/lessonExtras";
 
 export async function generateMetadata(props) {
   const { lessonId } = await props.params;
-  return lessonMetadata("iyun", await getLesson("iyun", lessonId));
+  const { preview } = await props.searchParams;
+  const meta = lessonMetadata("iyun", await getLesson("iyun", lessonId));
+  // תצוגה מקדימה של הדף החדש - לא לאינדקס
+  return preview ? { ...meta, robots: { index: false, follow: false } } : meta;
 }
 
 export default async function LessonPage(props) {
   const { lessonId } = await props.params;
+  const { preview } = await props.searchParams;
 
   const item = await getLesson("iyun", lessonId);
+  const extras = item && (await getLessonExtras("iyun", lessonId, preview));
 
   if (!item) {
     return (
@@ -59,7 +65,15 @@ export default async function LessonPage(props) {
       )}
       <RememberLastLesson item={item} type={"iyun"} />
       {/* key - במעבר בין שיעורים מתחילים נקי (סרטון לא מנגן, לא צף) */}
-      <LessonView key={item.pageid} item={item} type="iyun" />
+      <LessonView
+        key={item.pageid}
+        item={item}
+        type="iyun"
+        study={extras?.study}
+        sheet={extras?.sheet}
+        sheetInStudyOnly
+        startMode="both"
+      />
     </>
   );
 }

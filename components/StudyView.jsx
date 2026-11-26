@@ -13,6 +13,8 @@ const book = Frank_Ruhl_Libre({ subsets: ["hebrew"], weight: ["400", "500", "700
 
 const WIDE = 900; // מעל הרוחב הזה: הזוהר והמקור זה לצד זה
 const SOURCE_SHOWN_FOR = 40; // מקור קצר (פסוק, ציטוט) נשאר על המסך כמה שניות אחרי שנאמר
+// הנגן מדווח את הזמן רק כמה פעמים בשנייה - מסמנים חצי שנייה מוקדם, כדי שהסימון לא יפגר אחרי הרב
+const LEAD = 0.5;
 const READING_GAP = 25; // מעבר למשפט הבא תוך פחות מזה = קריאה ברצף, לא הסבר (משפט ארוך נקרא בכ-20 שניות)
 
 const formatTime = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
@@ -61,7 +63,7 @@ export default function StudyView({ passage, sheet, now, playing, onSeek, video,
   const lessonStart = useMemo(() => Math.min(...passage.anchors.map((a) => a.si)), [passage]);
 
   /* --- איפה הרב עכשיו --- */
-  const k = lastAnchor(anchors, now);
+  const k = lastAnchor(anchors, now + LEAD);
   const current = k >= 0 ? anchors[k] : null;
   // המעבר הקרוב ממשפט אחר (לפני) ואל משפט אחר (אחרי) - במשפט ארוך יש כמה עוגנים לאותו משפט
   let prev = null;
@@ -136,6 +138,10 @@ export default function StudyView({ passage, sheet, now, playing, onSeek, video,
 
   const zohar = (
     <section style={styles.zohar} aria-label="טקסט הזוהר">
+      <p style={styles.beta}>
+        <b>גרסת בטא.</b> הסימון נבנה אוטומטית מהקלטת השיעור, ולפעמים הוא מאחר, מקדים או מדלג על משפט.
+        הטקסט המלא נמצא כרגיל בלשוניות עברית, ארמית ומשולב.
+      </p>
       {/* בטלפון הסרטון מוצמד למעלה, אז שורת המצב לא נדבקת מתחתיו */}
       <div style={{ ...styles.status, ...(wide ? null : { position: "static" }) }} aria-live="polite">
         <span style={{ ...styles.dot, background: playing ? "#c0392b" : "#9aa3b2" }} />
@@ -292,6 +298,15 @@ export default function StudyView({ passage, sheet, now, playing, onSeek, video,
 const MARKER = "#fde68a"; // צבע של מרקר צהוב על דף
 
 const styles = {
+  beta: {
+    margin: "0 0 12px",
+    padding: "8px 12px",
+    borderRadius: 8,
+    background: "#fff6dc",
+    color: "#5a4300",
+    fontSize: 14,
+    lineHeight: 1.6,
+  },
   grid: {
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 440px)",

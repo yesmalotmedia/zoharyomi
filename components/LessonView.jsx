@@ -51,7 +51,8 @@ function computeFloatSize(viewportWidth) {
   return { width, height, anchor: "bottom" };
 }
 
-export default function LessonView({ item, type, sheet, study, english, startMode }) {
+// sheetInStudyOnly - בדף השיעור הרגיל דף המקורות מוצג רק בתוך "לימוד עם הרב", כדי שהתצוגות הקיימות לא ישתנו
+export default function LessonView({ item, type, sheet, study, english, startMode, sheetInStudyOnly }) {
   const [isMobile, setIsMobile] = useState(false);
   // דף עם "לימוד עם הרב" נפתח ישר בתצוגה הזו
   const [viewMode, setViewMode] = useState(startMode ?? (study ? "study" : "both"));
@@ -508,7 +509,11 @@ export default function LessonView({ item, type, sheet, study, english, startMod
                 color: viewMode === mode ? "white" : "black",
               }}
             >
-              {mode === "study" && "לימוד עם הרב"}
+              {mode === "study" && (
+                <>
+                  לימוד עם הרב <span style={styles.beta}>בטא</span>
+                </>
+              )}
               {mode === "he" && "עברית"}
               {mode === "ar" && "ארמית"}
               {mode === "both" && "משולב"}
@@ -604,13 +609,23 @@ export default function LessonView({ item, type, sheet, study, english, startMod
         </div>
       )}
 
-      {sheet && !isStudy && !isEnglish && <SourceSheet sheet={sheet} onSeek={seekTo} />}
+      {sheet && !sheetInStudyOnly && !isStudy && !isEnglish && <SourceSheet sheet={sheet} onSeek={seekTo} />}
     </div>
   );
 }
 
 /* ===================== STYLES ===================== */
 const styles = {
+  beta: {
+    fontSize: "0.7em",
+    fontWeight: 700,
+    padding: "1px 6px",
+    marginInlineStart: 4,
+    borderRadius: 99,
+    background: "#f4b400",
+    color: "#1b2433",
+    verticalAlign: "middle",
+  },
   container: {
     direction: "rtl",
     padding: 20,

@@ -17,6 +17,11 @@ const nextConfig = {
   /* config options here */
   // reactCompiler: true,
 
+  // נתוני "לימוד עם הרב" נקראים מהדיסק בזמן ריצה (utils/lessonExtras.js) - לצרף אותם לשרת
+  outputFileTracingIncludes: {
+    "/shiur/iyun/[lessonId]": ["./data/lessons/iyun/**/*"],
+  },
+
   async redirects() {
     return [
       // דפי שיעור ישנים (/pages/796) - לא תואמים אחד-לאחד לשיעורים החדשים, לכן לרשימה

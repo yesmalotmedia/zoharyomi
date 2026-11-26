@@ -20,6 +20,13 @@ export default function LessonNav({ type, pageid }) {
     next: { pageid: current + 1 },
   });
 
+  // בתצוגה מקדימה של הדף החדש (?preview=...) - להישאר בה גם בשיעור הבא/הקודם
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("preview");
+    if (p) setQuery(`?preview=${encodeURIComponent(p)}`);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -56,7 +63,7 @@ export default function LessonNav({ type, pageid }) {
   return (
     <div style={styles.navWrapper}>
       {nav.prev ? (
-        <Link href={`/shiur/${type}/${nav.prev.pageid}`} style={styles.navButton}>
+        <Link href={`/shiur/${type}/${nav.prev.pageid}${query}`} style={styles.navButton}>
           → שיעור קודם
           {nav.prev.daf && <span style={styles.sub}>{lessonLabel(nav.prev)}</span>}
         </Link>
@@ -66,7 +73,7 @@ export default function LessonNav({ type, pageid }) {
 
       {nav.next ? (
         <Link
-          href={`/shiur/${type}/${nav.next.pageid}`}
+          href={`/shiur/${type}/${nav.next.pageid}${query}`}
           style={{ ...styles.navButton, ...styles.nextButton }}
         >
           שיעור הבא ←
